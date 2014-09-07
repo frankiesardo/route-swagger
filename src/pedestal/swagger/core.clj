@@ -5,54 +5,63 @@
             [io.pedestal.interceptor :as interceptor]
             [ring.util.response :refer [response]]))
 
-;; base path can see what is in common ?
-;; if you specify resource-path helps ?
-;; route name can be a keyword or a vector and you can redefine api-docs
- (def swagger-docs
-   {:title "Swagger Sample App"
-    :description "This is a sample Petstore server."
-    :apiVersion "1.0"
-    :apis [{:route-name ::pets
-            :description "Operations about pets"
-            :ops [{:route-name ::find-pet-by-id
-                   :summary "This is home page"
-                   :notes "Works 50% of the times"}
-                  {:route-name ::add-pet
-                   :summary "This is about page"
-                   :notes "Works 90% of the times"}]}]})
+;; TODO:
+;; wire up swagger-ui
+;; responseMessages (map of return codes {:200 S1 :400 S2} ?)
+;; application name in route-name. Possibly having more than one api-docs
+;; body-params json-params edn-params naming problems
+;; better error handling at compile time (e.g. multiple returns)
+;; is there a way to determine produces and consumes?
+;; auth
+;; calculate basePath and resourcePath (use name of api?)
 
 
-(interceptor/definterceptorfn params
+(def example
+  {:title "Swagger Sample App"
+   :description "This is a sample Petstore server."
+   :apiVersion "1.0"
+   :apis [{:route-name ::pets
+           :description "Operations about pets"
+           :ops [{:route-name ::find-pet-by-id
+                  :summary "This is home page"
+                  :notes "Works 50% of the times"}
+                 {:route-name ::add-pet
+                  :summary "This is about page"
+                  :notes "Works 90% of the times"}]}]})
+
+
+
+(interceptor/definterceptorfn pre
   "Expect a map in the form of {:query-params S1 :path-params
   S2 :headers S3 :json-body S4} etc. Will assoc them back into request map
   if coercion is successful. Errors are stored under :errors key"
-  [{:as params-schema}]
+  [pre-schema]
   (with-meta
    (interceptor/on-request
+    ::pre
     (fn [req]
       (merge req
-             (schema/coerce-params params-schema req))))
-   {::doc/params params-schema}))
+             (schema/coerce-params pre-schema req))))
+   {::doc/pre pre-schema}))
 
-(interceptor/definterceptorfn returns
+(interceptor/definterceptorfn post
   ""
-  [returns-schema]
+  [post-schema]
   (with-meta
    (interceptor/on-response
+    ::post
     (fn [{:keys [body] :as resp}]
-      (assert (schema/validate returns-schema body))
+      (assert (schema/validate post-schema body))
       resp))
-   {::doc/returns returns-schema}))
-
-;; response messages?
+   {::doc/post post-schema}))
 
 ;;
 
-(def docs (atom {}))
+(def docs {})
 
 (defn- make-handler [key]
   (interceptor/handler key (fn [req]
-                             (response (get @docs key)))))
+                             (response (get docs key)))))
 
 (defn api-declaration [route-name]
   (make-handler route-name))
@@ -60,10 +69,12 @@
 (def resource-listing
   (make-handler ::doc/api-docs))
 
-(def swagger-ui ;; Nope this is different!
-  (make-handler ::swagger-ui))
+(def swagger-ui
+  ; TODO
+  )
 
 (defmacro defroutes [name doc-spec route-spec]
   `(let [route-table# (expand-routes (quote ~route-spec))]
      (def ~name route-table#)
-     (reset! docs (doc/expand-docs ~doc-spec route-table#))))
+     (alter-var-root #'docs (constantly
+                             (doc/expand-docs ~doc-spec route-table#)))))

@@ -7,7 +7,7 @@
 
 ; explain? fn
 
-(def ^:dynamic *matcher* c/json-coercion-matcher)
+(def ^:dynamic *matcher* c/+string-coercions+)
 
 (defn coerce [schema value]
   ((c/coercer schema *matcher*) value))
@@ -15,6 +15,13 @@
 (def validate s/validate)
 
 (def error? u/error?)
+
+(def ^:private request-key
+  {:path :path-params
+   :query :query-params
+   :body :json-body
+   :header :headers
+   :form :form-params})
 
 (defn coerce-params [params request]
   (apply merge-with merge
@@ -30,17 +37,10 @@
 (defn convert-returns [returns-schema]
   (json/->json returns-schema :top true))
 
-(def ^:private param-type
-  {:path-params :path
-   :query-params :query
-   :json-body :body
-   :headers :header
-   :form-params :form})
-
 (defn convert-parameters [params-schema]
   (swagger/convert-parameters
    (for [[type model] params-schema]
-     {:type (param-type type) :model model})))
+     {:type type :model model})))
 
 (defn convert-responses [responses-schema]
   [])

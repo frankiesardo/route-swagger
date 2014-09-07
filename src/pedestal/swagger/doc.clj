@@ -11,14 +11,14 @@
 (defn- relative-path [parent child]
   (.substring child (count parent)))
 
-(defn list-resources [{:keys [apis] :as docs} route-table]
+(defn list-resources [doc-spec route-table]
   (let [url-for (route/url-for-routes route-table)
         api-docs-url (url-for ::api-docs)]
     (merge
      swagger/swagger-defaults
-     (select-keys docs [:apiVersion])
-     {:info (select-keys docs swagger/api-declaration-keys)
-      :apis (for [{:keys [route-name description]} apis]
+     (select-keys doc-spec [:apiVersion])
+     {:info (select-keys doc-spec swagger/api-declaration-keys)
+      :apis (for [{:keys [route-name description]} (:apis doc-spec)]
               {:path (relative-path api-docs-url (url-for route-name))
                :description (or description "")})})))
 
@@ -26,8 +26,8 @@
 
 
 (defn- expand-op [{:keys [route-name method interceptors] :as op-spec}]
-  (let [returns-schema (last (keep (comp ::returns meta) interceptors))
-        params-schema (apply merge-with merge (keep (comp ::params meta) interceptors))
+  (let [returns-schema (last (keep (comp ::post meta) interceptors))
+        params-schema (apply merge-with merge (keep (comp ::pre meta) interceptors))
         responses-schema []]
     (merge
      (schema/convert-returns returns-schema)
@@ -38,8 +38,8 @@
       :parameters (schema/convert-parameters params-schema)})))
 
 (defn- extract-models [interceptors]
-  (let [body-schemas (keep (comp :json-body ::params meta) interceptors)
-        returns-schemas (keep (comp ::returns meta) interceptors)
+  (let [body-schemas (keep (comp :body ::pre meta) interceptors)
+        returns-schemas (keep (comp ::post meta) interceptors)
         models-schemas (concat body-schemas returns-schemas)]
     models-schemas))
 
@@ -75,7 +75,7 @@
 ;; Could potentially group by app-name
 (defn expand-docs [doc-spec route-table]
   (apply merge
-;         {::api-docs (list-resources doc-spec route-table)}
+         {::api-docs (list-resources doc-spec route-table)}
          (for [{:keys [route-name] :as api-spec} (:apis doc-spec)
                :let [api-spec (merge (select-keys doc-spec [:apiVersion]) api-spec)]]
            {route-name (declare-api api-spec route-table)})))
