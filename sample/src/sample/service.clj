@@ -43,8 +43,8 @@
 (swagger/defroutes routes swagger-docs
   [[8080
     ["/" ^:interceptors [(body-params/body-params) bootstrap/json-body]
-     ^:interceptors [(swagger/params Pre) (swagger/returns Post)]
      ["/pet" {:post add-pet}
+      ^:interceptors [(swagger/params Pre) (swagger/returns Post)]
       ["/:id" {:get find-pet-by-id}]]
      ["/api-docs" {:get [swagger/resource-listing]}
       ["/pets" {:get [(swagger/api-declaration ::pets)]}]]]]])
