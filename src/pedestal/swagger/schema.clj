@@ -5,8 +5,6 @@
             [schema.core :as s]
             [schema.utils :as u]))
 
-; explain? fn
-
 (def ^:dynamic *matcher* c/+string-coercions+)
 
 (defn coerce [schema value]
@@ -16,7 +14,7 @@
 
 (def error? u/error?)
 
-(def ^:private key->request-key
+(def ^:private schema-key->request-key
   {:path :path-params
    :query :query-params
    :body :json-params
@@ -26,13 +24,11 @@
 (defn coerce-params [params request]
   (apply merge-with merge
          (for [[key schema] params
-               :let [request-key (key->request-key key)
+               :let [request-key (schema-key->request-key key)
                      result (coerce schema (get request request-key))]]
            (if (error? result)
              {:errors {key result}}
              {key result}))))
-
-
 ;;
 
 (defn convert-returns [returns-schema]
@@ -45,8 +41,6 @@
 
 (defn convert-responses [responses-schema]
   [])
-
-;
 
 (defn convert-models [models-schemas]
   (->> models-schemas

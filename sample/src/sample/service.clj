@@ -27,8 +27,6 @@
 (defn update-pet-with-form [{:keys [path-params form-params] :as req}]
   (response (swap! @pets update-in (:id path-params) merge form-params)))
 
-;
-
 (defn get-all-pets [_]
   (response (let [pets (vals @pets)]
               {:total (count pets)
@@ -38,9 +36,6 @@
   (if errors
     (bad-request (pr-str errors))
     (response (swap! pets assoc (:id json-params) json-params))))
-
-
-
 
 ;;;;
 
@@ -64,7 +59,6 @@
 (s/defschema PetList
   {:total s/Int
    :pets [Pet]})
-;
 
 (def PartialPet
   {(opt :name) s/Str
