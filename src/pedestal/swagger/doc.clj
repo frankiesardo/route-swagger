@@ -1,7 +1,9 @@
 (ns pedestal.swagger.doc
   (:require [pedestal.swagger.schema :as schema]
             [io.pedestal.http.route :as route]
-            [ring.swagger.core :as swagger]))
+            [ring.swagger.core :as swagger]
+            [schema.core :as s]
+            [ring.swagger.json-schema :as json]))
 
 
 ; setup swagger-ui?
@@ -24,21 +26,32 @@
 
 ;;;;
 
-(defn- expand-op [{:keys [route-name method] :as op-spec}]
-  (merge
-   ;; data type
-   {:type "void"}
-   (select-keys op-spec [:summary :notes])
-   {:method (-> method name .toUpperCase)
-    :nickname route-name
-    :responseMessages []
-    :parameters []}))
+"path", "query", "body", "header", "form"
+
+(def ^:private param-type
+  {:path-params :path
+   :query-params :query
+   :json-body :body
+   :headers :header
+   :form-params :form})
+
+(defn- expand-op [{:keys [route-name method interceptors] :as op-spec}]
+  (let [returns-schema (last (keep (comp ::returns meta) interceptors))
+        params-schema (apply merge-with merge (keep (comp ::params meta) interceptors))
+        responses-schema []]
+    (merge
+     (json/->json returns-schema :top true)
+     (select-keys op-spec [:summary :notes])
+     {:method (-> method name clojure.string/upper-case)
+      :nickname route-name
+      :responseMessages responses-schema
+      :parameters (swagger/convert-parameters
+                   (for [[type model] params-schema]
+                     {:type (param-type type) :model model}))})))
 
 (defn- extract-models [interceptors]
   (let [body-schemas (keep (comp :json-body ::params meta) interceptors)
         returns-schemas (keep (comp ::returns meta) interceptors)
-        _ (println "&&&" (map meta interceptors))
-        _ (println "***" body-schemas "***" returns-schemas)
         all-models (->> (concat body-schemas returns-schemas)
                         flatten
                         (map swagger/with-named-sub-schemas))]

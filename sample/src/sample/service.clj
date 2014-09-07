@@ -36,21 +36,18 @@
                   :query-params Foo})
 (s/defschema Post {:b String})
 
+
+
+
 (swagger/defroutes routes swagger-docs
   [[8080
-    ["/" ^:interceptors [(body-params/body-params)
-                         bootstrap/html-body
-                         bootstrap/json-body]
+    ["/" ^:interceptors [(body-params/body-params) bootstrap/json-body]
      ^:interceptors [(swagger/params Pre) (swagger/returns Post)]
      ["/pet" {:post add-pet}
       ["/:id" {:get find-pet-by-id}]]
      ["/api-docs" {:get [swagger/resource-listing]}
       ["/pets" {:get [(swagger/api-declaration ::pets)]}]]]]])
 
-(def url-for (route/url-for-routes routes))
-
-;; Consumed by sample.server/create-server
-;; See bootstrap/default-interceptors for additional options you can configure
 (def service {:env :prod
               ::bootstrap/routes routes
               ::bootstrap/resource-path "/public"
