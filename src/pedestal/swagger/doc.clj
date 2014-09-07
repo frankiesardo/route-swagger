@@ -15,14 +15,14 @@
 
 (defn list-resources [{:keys [apis] :as docs} route-table]
   (let [url-for (route/url-for-routes route-table)
-        api-docs-path (url-for ::api-docs)]
+        api-docs-url (url-for ::api-docs)]
     (merge
      swagger/swagger-defaults
      (select-keys docs [:apiVersion])
      {:info (select-keys docs swagger/api-declaration-keys)
-      :apis (for [[name details] apis]
-              {:path (relative-path api-docs-path (url-for name))
-               :description (or (:description details) "")})})))
+      :apis (for [{:keys [route-name description]} apis]
+              {:path (relative-path api-docs-url (url-for route-name))
+               :description (or description "")})})))
 
 ;;;;
 
@@ -89,7 +89,7 @@
 ;; Could potentially group by app-name
 (defn expand-docs [doc-spec route-table]
   (apply merge
-         {::api-docs (list-resources doc-spec route-table)}
-         (for [[route-name api-spec] (:apis doc-spec)
+;         {::api-docs (list-resources doc-spec route-table)}
+         (for [{:keys [route-name] :as api-spec} (:apis doc-spec)
                :let [api-spec (merge (select-keys doc-spec [:apiVersion]) api-spec)]]
            {route-name (declare-api api-spec route-table)})))

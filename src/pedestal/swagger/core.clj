@@ -7,23 +7,19 @@
 
 ;; base path can see what is in common ?
 ;; if you specify resource-path helps ?
-(def swagger-docs
-  {:title "Swagger Sample App"
-   :description "This is a sample Petstore server."
-   :apis {::pets {:description "Operations about pets"
-                  :ops [{:path [:clojure.core/+ :swagger] ; string, keyword or vector
-                         :summary "Update an existing per"
-                         :notes "Works 50% of the times"}
-                        {:path [:clojure.core/- :swagger]
-                         :summary "Delete an existing per"
-                         :notes "Works 90% of the times"}]}
-          ::users {:description "Operations about users"
-                   :ops [{:path [:clojure.core/* :swagger]
-                          :summary "Update an existing us"
-                          :notes "Works 50% of the times"}
-                         {:path [:clojure.core// :swagger]
-                          :summary "Delete an existing us"
-                          :notes "Works 90% of the times"}]}}})
+;; route name can be a keyword or a vector and you can redefine api-docs
+ (def swagger-docs
+   {:title "Swagger Sample App"
+    :description "This is a sample Petstore server."
+    :apiVersion "1.0"
+    :apis [{:route-name ::pets
+            :description "Operations about pets"
+            :ops [{:route-name ::find-pet-by-id
+                   :summary "This is home page"
+                   :notes "Works 50% of the times"}
+                  {:route-name ::add-pet
+                   :summary "This is about page"
+                   :notes "Works 90% of the times"}]}]})
 
 
 (interceptor/definterceptorfn params

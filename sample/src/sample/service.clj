@@ -7,17 +7,7 @@
             [ring.util.response :refer [response]]
             [schema.core :as s]))
 
-(def swagger-docs
-  {:title "Swagger Sample App"
-   :description "This is a sample Petstore server."
-   :apiVersion "1.0"
-   :apis {::pets {:description "Operations about pets"
-                  :ops [{:route-name ::find-pet-by-id
-                         :summary "This is home page"
-                         :notes "Works 50% of the times"}
-                        {:route-name ::add-pet
-                         :summary "This is about page"
-                         :notes "Works 90% of the times"}]}}})
+
 
 (def pets (atom {}))
 
@@ -37,7 +27,18 @@
 (s/defschema Post {:b String})
 
 
-
+(def swagger-docs
+  {:title "Swagger Sample App"
+   :description "This is a sample Petstore server."
+   :apiVersion "1.0"
+   :apis [{:route-name ::pets
+           :description "Operations about pets"
+           :ops [{:route-name ::find-pet-by-id
+                  :summary "This is home page"
+                  :notes "Works 50% of the times"}
+                 {:route-name ::add-pet
+                  :summary "This is about page"
+                  :notes "Works 90% of the times"}]}]})
 
 (swagger/defroutes routes swagger-docs
   [[8080
