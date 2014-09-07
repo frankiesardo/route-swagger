@@ -7,15 +7,22 @@
             [ring.util.response :refer [response]]
             [schema.core :as s]))
 
-
+(defn bad-request
+  "Returns a Ring response for an HTTP 400 bad request"
+  [body]
+  {:status  400
+   :headers {}
+   :body    body})
 
 (def pets (atom {}))
 
 (defn get-pet-by-id [{:keys [path-params] :as req}]
   (response (get @pets (:id path-params))))
 
-(defn update-pet [{:keys [path-params json-params] :as req}]
-  (response (swap! @pets assoc (:id path-params) json-params)))
+(defn update-pet [{:keys [errors path-params json-params] :as req}]
+  (if errors
+    (bad-request (pr-str errors))
+    (response (swap! @pets assoc (:id path-params) json-params))))
 
 (defn update-pet-with-form [{:keys [path-params form-params] :as req}]
   (response (swap! @pets update-in (:id path-params) merge form-params)))
@@ -27,8 +34,10 @@
               {:total (count pets)
                :pets pets})))
 
-(defn add-pet [{:keys [json-params] :as req}]
-  (response (swap! pets assoc (:id json-params) json-params)))
+(defn add-pet [{:keys [errors json-params] :as req}]
+  (if errors
+    (bad-request (pr-str errors))
+    (response (swap! pets assoc (:id json-params) json-params))))
 
 
 
@@ -94,7 +103,7 @@
               get-pet-by-id]}
        {:put [^:interceptors [(swagger/pre {:body Pet})]
               update-pet]}
-       {:patch [^:interceptors [(swagger/pre {:form UpdatePet})]
+       {:patch [^:interceptors [(swagger/pre {:form PartialPet})]
                 update-pet-with-form]}]]
 
      ["/api-docs" {:get [swagger/resource-listing]}

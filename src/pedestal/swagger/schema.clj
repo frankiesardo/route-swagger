@@ -16,17 +16,18 @@
 
 (def error? u/error?)
 
-(def ^:private request-key
+(def ^:private key->request-key
   {:path :path-params
    :query :query-params
-   :body :json-body
+   :body :json-params
    :header :headers
    :form :form-params})
 
 (defn coerce-params [params request]
   (apply merge-with merge
          (for [[key schema] params
-               :let [result (coerce schema (get request key))]]
+               :let [request-key (key->request-key key)
+                     result (coerce schema (get request request-key))]]
            (if (error? result)
              {:errors {key result}}
              {key result}))))

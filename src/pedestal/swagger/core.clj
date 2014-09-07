@@ -6,6 +6,7 @@
             [ring.util.response :refer [response]]))
 
 ;; TODO:
+;; tests!
 ;; wire up swagger-ui
 ;; responseMessages (map of return codes {:200 S1 :400 S2} ?)
 ;; application name in route-name. Possibly having more than one api-docs
@@ -32,28 +33,27 @@
 
 
 (interceptor/definterceptorfn pre
-  "Expect a map in the form of {:query-params S1 :path-params
-  S2 :headers S3 :json-body S4} etc. Will assoc them back into request map
-  if coercion is successful. Errors are stored under :errors key"
+  "Expect a map in the form of {:query S1 :path S2 :headers S3 :body
+  S4} etc. Will assoc them back into request map if coercion is
+  successful. Errors are stored under :errors key"
   [pre-schema]
   (with-meta
-   (interceptor/on-request
-    ::pre
-    (fn [req]
-      (merge req
-             (schema/coerce-params pre-schema req))))
-   {::doc/pre pre-schema}))
+    (interceptor/on-request
+     ::pre
+     (fn [req]
+       (merge req (schema/coerce-params pre-schema req))))
+    {::doc/pre pre-schema}))
 
 (interceptor/definterceptorfn post
   ""
   [post-schema]
   (with-meta
-   (interceptor/on-response
-    ::post
-    (fn [{:keys [body] :as resp}]
-      (assert (schema/validate post-schema body))
-      resp))
-   {::doc/post post-schema}))
+    (interceptor/on-response
+     ::post
+     (fn [{:keys [body] :as resp}]
+       (assert (schema/validate post-schema body))
+       resp))
+    {::doc/post post-schema}))
 
 ;;
 
@@ -70,7 +70,7 @@
   (make-handler ::doc/api-docs))
 
 (def swagger-ui
-  ; TODO
+                                        ; TODO
   )
 
 (defmacro defroutes [name doc-spec route-spec]
