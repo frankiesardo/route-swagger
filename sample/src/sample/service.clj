@@ -7,6 +7,8 @@
             [ring.util.response :refer [response]]
             [schema.core :as s]))
 
+;; Handlers
+
 (defn bad-request
   "Returns a Ring response for an HTTP 400 bad request"
   [body]
@@ -37,7 +39,7 @@
     (bad-request (pr-str errors))
     (response (swap! pets assoc (:id json-params) json-params))))
 
-;;;;
+;;;; Schemas
 
 (def opt s/optional-key)
 
@@ -64,7 +66,7 @@
   {(opt :name) s/Str
    (opt :status) (s/enum "available" "pending" "sold")})
 
-;;;;
+;;;; Routes
 
 (def swagger-docs
   {:title "Swagger Sample App"
@@ -85,7 +87,7 @@
                   :summary "Add a new pet to the store"}]}]})
 
 (swagger/defroutes routes swagger-docs
-  [[8080
+  [[:http "localhost" 8080
     ["/" ^:interceptors [(body-params/body-params) bootstrap/json-body]
      ["/pet"
       {:get [^:interceptors [(swagger/post PetList)]

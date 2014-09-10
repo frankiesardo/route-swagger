@@ -3,15 +3,14 @@
             [io.pedestal.http.route :as route]
             [ring.swagger.core :as swagger]))
 
-
-; does it need anything else?
+;;;; swagger-ui
 
 (defn- mount-swagger-ui [doc-spec route-table]
   (let [url-for (route/url-for-routes route-table)
         api-docs-url (url-for ::api-docs)]
     api-docs-url))
 
-;;
+;;;; api-docs
 
 (defn- relative-path [parent child]
   (.substring child (count parent)))
@@ -27,7 +26,7 @@
               {:path (relative-path api-docs-url (url-for route-name))
                :description (or description "")})})))
 
-;;;;
+;;;; apis
 
 
 (defn- expand-op [{:keys [route-name method interceptors] :as op-spec}]
