@@ -3,7 +3,7 @@
             [pedestal.swagger.schema :as schema]
             [io.pedestal.http.route.definition :refer [expand-routes]]
             [io.pedestal.interceptor :as interceptor]
-            [ring.util.response :refer [response]]))
+            [ring.util.response :refer [response resource-response redirect]]))
 
 ;; TODO:
 ;; tests!
@@ -53,9 +53,19 @@
 (def resource-listing
   (make-handler ::doc/api-docs))
 
+(defn- conf-js [api-docs-url]
+  (response (str "window.API_CONF = {url: \"" "/api-docs" "\"};")))
+
 (def swagger-ui
-                                        ; TODO
-  )
+  (interceptor/handler
+   ::doc/swagger-ui
+   (fn [{:keys [path-params path-info] :as req}]
+     (let [api-docs-url (get docs ::doc/swagger-ui)
+           res (:resource path-params)]
+       (case res
+         "" (redirect (str path-info "index.html"))
+         "conf.js" (conf-js api-docs-url)
+         (resource-response res {:root "swagger-ui/"}))))))
 
 (defmacro defroutes [name doc-spec route-spec]
   `(let [route-table# (expand-routes (quote ~route-spec))]

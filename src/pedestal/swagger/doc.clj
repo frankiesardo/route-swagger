@@ -4,7 +4,12 @@
             [ring.swagger.core :as swagger]))
 
 
-; setup swagger-ui?
+; does it need anything else?
+
+(defn- mount-swagger-ui [doc-spec route-table]
+  (let [url-for (route/url-for-routes route-table)
+        api-docs-url (url-for ::api-docs)]
+    api-docs-url))
 
 ;;
 
@@ -75,7 +80,8 @@
 ;; Could potentially group by app-name
 (defn expand-docs [doc-spec route-table]
   (apply merge
-         {::api-docs (list-resources doc-spec route-table)}
+         {::swagger-ui (mount-swagger-ui doc-spec route-table)
+          ::api-docs (list-resources doc-spec route-table)}
          (for [{:keys [route-name] :as api-spec} (:apis doc-spec)
                :let [api-spec (merge (select-keys doc-spec [:apiVersion]) api-spec)]]
            {route-name (declare-api api-spec route-table)})))

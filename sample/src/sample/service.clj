@@ -100,6 +100,7 @@
        {:patch [^:interceptors [(swagger/pre {:form PartialPet})]
                 update-pet-with-form]}]]
 
+     ["/ui/*resource" {:get [swagger/swagger-ui]}]
      ["/api-docs" {:get [swagger/resource-listing]}
       ["/pets" {:get [(swagger/api-declaration ::pets)]}]]]]])
 
