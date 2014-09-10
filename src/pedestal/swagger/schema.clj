@@ -27,8 +27,8 @@
                :let [request-key (schema-key->request-key key)
                      result (coerce schema (get request request-key))]]
            (if (error? result)
-             {:errors {key result}}
-             {key result}))))
+             {:errors {request-key result}}
+             {request-key result}))))
 ;;
 
 (defn convert-returns [returns-schema]

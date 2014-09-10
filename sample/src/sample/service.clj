@@ -4,10 +4,11 @@
             [io.pedestal.http.route :as route]
             [io.pedestal.http.body-params :as body-params]
             [io.pedestal.http.route.definition :refer [defroutes]]
+            [io.pedestal.interceptor :as interceptor]
             [ring.util.response :refer [response]]
             [schema.core :as s]))
 
-;; Handlers
+;; Utils
 
 (defn bad-request
   "Returns a Ring response for an HTTP 400 bad request"
@@ -16,28 +17,59 @@
    :headers {}
    :body    body})
 
-(def pets (atom {}))
+(defn- keyword-syntax? [s]
+  (re-matches #"[A-Za-z*+!_?-][A-Za-z0-9*+!_?-]*" s))
+
+(defn- keyify-params [target]
+  (cond
+   (map? target) (into {}
+                       (for [[k v] target]
+                         [(if (and (string? k) (keyword-syntax? k))
+                            (keyword k)
+                            k)
+                          (keyify-params v)]))
+   (vector? target) (vec (map keyify-params target))
+   :else target))
+
+(interceptor/defon-request wrap-keyword-params
+  "Keify form params"
+  [request]
+  (update-in request [:form-params] keyify-params))
+
+;; Store
+
+(def pet-store (atom {}))
 
 (defn get-pet-by-id [{:keys [path-params] :as req}]
-  (response (get @pets (:id path-params))))
+  (response (get-in @pet-store [:pets (:id path-params)])))
 
 (defn update-pet [{:keys [errors path-params json-params] :as req}]
   (if errors
     (bad-request (pr-str errors))
-    (response (swap! @pets assoc (:id path-params) json-params))))
+    (response (swap! pet-store assoc-in [:pets (:id path-params)] json-params))))
 
 (defn update-pet-with-form [{:keys [path-params form-params] :as req}]
-  (response (swap! @pets update-in (:id path-params) merge form-params)))
+  (response (swap! pet-store update-in [:pets (:id path-params)] merge form-params)))
 
 (defn get-all-pets [_]
-  (response (let [pets (vals @pets)]
+  (response (let [pets (vals (:pets @pet-store))]
               {:total (count pets)
                :pets pets})))
 
 (defn add-pet [{:keys [errors json-params] :as req}]
   (if errors
     (bad-request (pr-str errors))
-    (response (swap! pets assoc (:id json-params) json-params))))
+    (response (swap! pet-store assoc-in [:pets (:id json-params)] json-params))))
+
+;
+
+(defn add-user [{:keys [errors json-params] :as req}]
+  (if errors
+    (bad-request (pr-str errors))
+    (response (swap! pet-store assoc-in [:users (:username json-params)] json-params))))
+
+(defn get-user-by-name [{:keys [path-params] :as req}]
+  (response (get-in @pet-store [:users (:username path-params)])))
 
 ;;;; Schemas
 
@@ -66,13 +98,22 @@
   {(opt :name) s/Str
    (opt :status) (s/enum "available" "pending" "sold")})
 
+;
+
+(s/defschema User
+  {:username s/Str
+   :password s/Str
+   (opt :first-name) s/Str
+   (opt :last-name) s/Str
+   (opt :status) (s/enum "registered" "active" "closed")})
+
 ;;;; Routes
 
 (def swagger-docs
   {:title "Swagger Sample App"
    :description "This is a sample Petstore server."
    :apiVersion "1.0"
-   :apis [{:route-name ::pets
+   :apis [{:route-name ::pet
            :description "Operations about pets"
            :ops [{:route-name ::get-pet-by-id
                   :summary "Find pet by ID"
@@ -84,14 +125,22 @@
                  {:route-name ::get-all-pets
                   :summary "Get all pets in the store"}
                  {:route-name ::add-pet
-                  :summary "Add a new pet to the store"}]}]})
+                  :summary "Add a new pet to the store"}]}
+          {:route-name ::user
+           :description "Operations about users"
+           :ops [{:route-name ::add-user
+                  :summary "Create user"}
+                 {:route-name ::get-user-by-name
+                  :summary "Get user by name"}]}]})
 
 (swagger/defroutes routes swagger-docs
   [[:http "localhost" 8080
-    ["/" ^:interceptors [(body-params/body-params) bootstrap/json-body]
+    ["/" ^:interceptors [(body-params/body-params)
+                         wrap-keyword-params
+                         bootstrap/json-body]
      ["/pet"
       {:get [^:interceptors [(swagger/post PetList)]
-              get-all-pets]}
+             get-all-pets]}
       {:post [^:interceptors [(swagger/pre {:body Pet})]
               add-pet]}
       ["/:id" ^:interceptors [(swagger/pre {:path {:id s/Int}})]
@@ -101,10 +150,17 @@
               update-pet]}
        {:patch [^:interceptors [(swagger/pre {:form PartialPet})]
                 update-pet-with-form]}]]
+     ["/user"
+      {:post [^:interceptors [(swagger/pre {:body User})]
+              add-user]}
+      ["/:username" ^:interceptors [(swagger/pre {:path {:username s/Str}})]
+       {:get [^:interceptors [(swagger/post User)]
+              get-user-by-name]}]]
 
      ["/ui/*resource" {:get [swagger/swagger-ui]}]
      ["/api-docs" {:get [swagger/resource-listing]}
-      ["/pets" {:get [(swagger/api-declaration ::pets)]}]]]]])
+      ["/pets" {:get [(swagger/api-declaration ::pet)]}]
+      ["/user" {:get [(swagger/api-declaration ::user)]}]]]]])
 
 (def service {:env :prod
               ::bootstrap/routes routes
