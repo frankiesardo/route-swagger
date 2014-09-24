@@ -5,6 +5,7 @@
             [io.pedestal.http.body-params :as body-params]
             [io.pedestal.http.route.definition :refer [defroutes]]
             [io.pedestal.interceptor :as interceptor]
+            [io.pedestal.impl.interceptor :as interceptor-impl]
             [ring.util.response :refer [response]]
             [schema.core :as s]))
 
@@ -133,7 +134,7 @@
                  {:route-name ::get-user-by-name
                   :summary "Get user by name"}]}]})
 
-(swagger/defroutes routes swagger-docs
+#_(swagger/defroutes routes swagger-docs
   [[:http "localhost" 8080
     ["/" ^:interceptors [(body-params/body-params)
                          wrap-keyword-params
@@ -161,6 +162,29 @@
      ["/api-docs" {:get [swagger/resource-listing]}
       ["/pets" {:get [(swagger/api-declaration ::pet)]}]
       ["/user" {:get [(swagger/api-declaration ::user)]}]]]]])
+
+(interceptor/defaround foo
+  ([context] (def bar context) context)
+  ([context] (def bar context) context))
+
+
+(interceptor/defbefore aaa
+  [{:keys [request] :as context}]
+  (def bbb context)
+  (if (= "1" (-> request :path-params :a))
+    context
+    (let [response {:status 404 :body "Not a number"}]
+      (-> context
+          (interceptor-impl/terminate)
+          (assoc :response response)))))
+
+(defn quiz [request] {:status 200 :body "hey"})
+(defn quix [request] {:status 201 :body "hoy"})
+
+(swagger/defroutes routes [[
+;                            ["/x/:a/:b" ^:interceptors [aaa] {:get quiz}]
+                            ["/*resource" ^:interceptors [quiz] {:get quix}]
+                            ]])
 
 (def service {:env :prod
               ::bootstrap/routes routes

@@ -7,28 +7,21 @@
 
 (def ^:dynamic *matcher* c/+string-coercions+)
 
-(defn coerce [schema value]
+(defn- coerce [schema value]
   ((c/coercer schema *matcher*) value))
 
-(def validate s/validate)
+(defn coerce-params [preconditions request]
+  (let [request-schema (assoc preconditions s/Any s/Any)
+        result (coerce request-schema request)]
+    (if (u/error? result)
+      (assoc request :errors result)
+      (merge request result))))
 
-(def error? u/error?)
+(defn validate-responses [postconditions {:keys [status body] :as response}]
+  (if-let [{:keys [schema]} (get postconditions status)]
+    (assert (s/validate schema body))
+    (assert (s/validate (get postconditions :default s/Any) body))))
 
-(def ^:private schema-key->request-key
-  {:path :path-params
-   :query :query-params
-   :body :json-params
-   :header :headers
-   :form :form-params})
-
-(defn coerce-params [params request]
-  (apply merge-with merge
-         (for [[key schema] params
-               :let [request-key (schema-key->request-key key)
-                     result (coerce schema (get request request-key))]]
-           (if (error? result)
-             {:errors {request-key result}}
-             {request-key result}))))
 ;;
 
 (defn convert-returns [returns-schema]
