@@ -15,7 +15,7 @@
     (interceptor/handler
      ::doc/swagger-object
      (fn [request]
-       (response (::doc/swagger-object docs))))
+       (response (dissoc docs :operations))))
     {::doc/swagger-object doc-spec}))
 
 (def swagger-ui
@@ -53,9 +53,11 @@
                 {::doc/handler ~doc})))
 
 (defmacro defmiddleware
-  [name doc args & body]
-  `(def ~name (with-meta (interceptor/middleware (fn ~args ~@body))
-                {::doc/middleware ~doc})))
+  [name doc before after]
+  (let [f1 (cons 'fn before)
+        f2 (cons 'fn after)]
+    `(def ~name (with-meta (interceptor/middleware ~f1 ~f2)
+                  {::doc/middleware ~doc}))))
 
 (defmacro defon-request
   [name doc args & body]
@@ -65,4 +67,21 @@
 (defmacro defon-response
   [name doc args & body]
   `(def ~name (with-meta (interceptor/on-response (fn ~args ~@body))
+                {::doc/middleware ~doc})))
+
+(defmacro defaround
+  [name doc before after]
+  (let [f1 (cons 'fn before)
+        f2 (cons 'fn after)]
+    `(def ~name (with-meta (interceptor/middleware ~f1 ~f2)
+                  {::doc/middleware ~doc}))))
+
+(defmacro defbefore
+  [name doc args & body]
+  `(def ~name (with-meta (interceptor/before (fn ~args ~@body))
+                {::doc/middleware ~doc})))
+
+(defmacro defafter
+  [name doc args & body]
+  `(def ~name (with-meta (interceptor/after (fn ~args ~@body))
                 {::doc/middleware ~doc})))

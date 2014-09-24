@@ -1,6 +1,12 @@
 # pedestal-swagger
 
+[![Build Status](https://secure.travis-ci.org/frankiesardo/pedestal-swagger.png)](http://travis-ci.org/frankiesardo/pedestal-swagger)
+
 Generate Swagger documentation from pedestal routes
+
+## Download
+
+[![Clojars Project](http://clojars.org/pedestal-swagger/latest-version.svg)](http://clojars.org/pedestal-swagger)
 
 ## Usage
 
