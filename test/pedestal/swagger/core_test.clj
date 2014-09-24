@@ -26,9 +26,9 @@
 
 (deftest sample-anonymous-app
   (let [routes (expand-routes
-                 '[[["/a/:b/c" {:post handler1}]
-                    ["/x/:y/z" {:patch handler2}]
-                    ["/docs" {:get [(swagger-object doc-spec)]}]]])
+                `[[["/a/:b/c" {:post handler1}]
+                   ["/x/:y/z" {:patch handler2}]
+                   ["/docs" {:get [(swagger-object doc-spec)]}]]])
         docs (doc/generate-docs routes)]
     (is (= "Test" (:title docs)))
     (is (= 2 (count (:operations docs))))))
