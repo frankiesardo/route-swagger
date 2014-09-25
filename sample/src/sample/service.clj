@@ -5,8 +5,8 @@
             [io.pedestal.http.body-params :as body-params]
             [io.pedestal.http.route.definition :refer [defroutes]]
             [io.pedestal.interceptor :as interceptor]
-            [io.pedestal.impl.interceptor :as interceptor-impl]
-            [ring.util.response :refer [response]]
+            [io.pedestal.impl.interceptor :refer [terminate]]
+            [ring.util.response :refer [response not-found]]
             [schema.core :as s]))
 
 ;; Utils
@@ -18,24 +18,25 @@
    :headers {}
    :body    body})
 
-(defn- keyword-syntax? [s]
-  (re-matches #"[A-Za-z*+!_?-][A-Za-z0-9*+!_?-]*" s))
+(interceptor/definterceptorfn keywordize-params
+  [& ks]
+  (interceptor/on-request
+   ::keywordize
+   (fn [request]
+     (->> (map (partial get request) ks)
+          (map #(zipmap (map keyword (keys %)) (vals %)))
+          (zipmap ks)
+          (apply merge (apply dissoc request ks))))))
 
-(defn- keyify-params [target]
-  (cond
-   (map? target) (into {}
-                       (for [[k v] target]
-                         [(if (and (string? k) (keyword-syntax? k))
-                            (keyword k)
-                            k)
-                          (keyify-params v)]))
-   (vector? target) (vec (map keyify-params target))
-   :else target))
-
-(interceptor/defon-request wrap-keyword-params
-  "Keify form params"
-  [request]
-  (update-in request [:form-params] keyify-params))
+(interceptor/definterceptorfn merge-body
+  ([] (merge-body :json-params :edn-params))
+  ([& ks]
+     (interceptor/on-request
+      ::merge-body
+      (fn [request]
+        (->> (map (partial get request) ks)
+             (apply merge)
+             (assoc request :body-params))))))
 
 ;;;; Schemas
 
@@ -78,6 +79,29 @@
 
 (def pet-store (atom {}))
 
+(swagger/defhandler get-all-pets
+  {:summary "Get all pets in the store"}
+  [_]
+  (response (let [pets (vals (:pets @pet-store))]
+              {:total (count pets)
+               :pets pets})))
+
+(swagger/defhandler add-pet
+  {:summary "Add a new pet to the store"}
+  [{:keys [errors json-params] :as req}]
+  (if errors
+    (bad-request (pr-str errors))
+    (response (swap! pet-store assoc-in [:pets (:id json-params)] json-params))))
+
+(swagger/defbefore load-pet-from-db
+  {:description "This is run for every pet/:id"}
+  [{:keys [request response] :as context}]
+  (if-let [pet (get-in @pet-store [:pets (-> request :path-params :id)])]
+    (assoc-in context [:request :middleware :pet] pet)
+    (-> context
+        terminate
+        (assoc-in [:response] (not-found "Pet not found")))))
+
 (swagger/defhandler get-pet-by-id
   {:summary "Find pet by ID"
    :description "Returns a pet based on ID"}
@@ -95,20 +119,6 @@
   {:summary "Updates a pet in the store with form data"}
   [{:keys [path-params form-params] :as req}]
   (response (swap! pet-store update-in [:pets (:id path-params)] merge form-params)))
-
-(swagger/defhandler get-all-pets
-  {:summary "Get all pets in the store"}
-  [_]
-  (response (let [pets (vals (:pets @pet-store))]
-              {:total (count pets)
-               :pets pets})))
-
-(swagger/defhandler add-pet
-  {:summary "Add a new pet to the store"}
-  [{:keys [errors json-params] :as req}]
-  (if errors
-    (bad-request (pr-str errors))
-    (response (swap! pet-store assoc-in [:pets (:id json-params)] json-params))))
 
 ;
 
@@ -131,14 +141,17 @@
    :description "This is a sample Petstore server."
    :apiVersion "2.0"})
 
+
 (swagger/defroutes routes
   [[:http "localhost" 8080
     ["/" ^:interceptors [(body-params/body-params)
-                         bootstrap/json-body]
+                         bootstrap/json-body
+                         (merge-body)
+                         (keywordize-params :form-params :headers)]
      ["/pet"
       {:get get-all-pets}
       {:post add-pet}
-      ["/:id" ;;
+      ["/:id" ^:interceptors [load-pet-from-db]
        {:get get-pet-by-id}
        {:put update-pet}
        {:patch update-pet-with-form}]]
