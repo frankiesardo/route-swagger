@@ -14,15 +14,24 @@
    :query   :query-params
    :headers :headers})
 
+(defn- loosen-schema [[k v]]
+  (if (#{:query :headers} k)
+    [k (assoc v s/Any s/Any)]
+    [k v]))
+
+(defn- ->request-schema [params-schema]
+  (->> params-schema
+       (map loosen-schema)
+       (map (fn [[k v]] [(schema->param k) v]))
+       (into {})
+       (merge {s/Any s/Any})))
+
 (defn- coerce [schema matcher value]
   ((c/coercer schema matcher) value))
 
-(defn- ->request-keys [params-schema]
-  (into {} (map (fn [[k v]] [(schema->param k) v]) params-schema)))
-
 (defn coerce-params [params-schema request]
-  (let [params-schema (assoc (->request-keys params-schema) s/Any s/Any)
-        result (coerce params-schema default-matcher request)]
+  (let [request-schema (->request-schema params-schema)
+        result (coerce request-schema default-matcher request)]
     (if (u/error? result)
       (assoc request :errors result)
       (merge request result))))
