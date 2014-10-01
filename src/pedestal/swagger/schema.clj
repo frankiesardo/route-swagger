@@ -5,39 +5,46 @@
             [schema.core :as s]
             [schema.utils :as u]))
 
-(def ^:dynamic *matcher* c/+string-coercions+)
+(defn- deep-merge-with
+  "Like merge-with, but merges maps recursively, applying the given fn
+  only when there's a non-map at a particular level.
 
-(defn- coerce [schema value]
-  ((c/coercer schema *matcher*) value))
+  (deep-merge-with + {:a {:b {:c 1 :d {:x 1 :y 2}} :e 3} :f 4}
+                     {:a {:b {:c 2 :d {:z 9} :z 3} :e 100}})
+  -> {:a {:b {:z 3, :c 3, :d {:z 9, :x 1, :y 2}}, :e 103}, :f 4}"
+  [f & maps]
+  (apply
+   (fn m [& maps]
+     (if (every? map? maps)
+       (apply merge-with m maps)
+       (apply f maps)))
+   maps))
 
-(defn coerce-params [preconditions request]
-  (let [request-schema (assoc preconditions s/Any s/Any)
-        result (coerce request-schema request)]
+(def deep-merge (partial deep-merge-with (fn [& args] (last args))))
+
+(def ^:private  default-matcher c/+string-coercions+)
+
+(def ^:private schema->param
+  {:body    :body-params
+   :form    :form-params
+   :path    :path-params
+   :query   :query-params
+   :headers :headers})
+
+(defn- coerce [schema matcher value]
+  ((c/coercer schema matcher) value))
+
+(defn- ->request-keys [params-schema]
+  (into {} (map (fn [[k v]] [(schema->param k) v]) params-schema)))
+
+(defn coerce-params [params-schema request]
+  (let [params-schema (->request-keys params-schema)
+        result (coerce params-schema default-matcher request)]
     (if (u/error? result)
       (assoc request :errors result)
-      (merge request result))))
+      (deep-merge request result))))
 
-(defn validate-responses [postconditions {:keys [status body] :as response}]
-  (if-let [{:keys [schema]} (get postconditions status)]
-    (assert (s/validate schema body))
-    (assert (s/validate (get postconditions :default s/Any) body))))
-
-;;
-
-(defn convert-returns [returns-schema]
-  (json/->json returns-schema :top true))
-
-(defn convert-parameters [params-schema]
-  (swagger/convert-parameters
-   (for [[type model] params-schema]
-     {:type type :model model})))
-
-(defn convert-responses [responses-schema]
-  [])
-
-(defn convert-models [models-schemas]
-  (->> models-schemas
-       (map swagger/with-named-sub-schemas)
-       (map (juxt s/schema-name identity))
-       (into {})
-       swagger/transform-models))
+(defn validate-response [responses-schema {:keys [status body] :as response}]
+  (if-let [{:keys [schema]} (get responses-schema status)]
+    (s/validate schema body)
+    (s/validate (get responses-schema :default s/Any) body)))

@@ -6,7 +6,7 @@
             [io.pedestal.http.route.definition :refer [defroutes]]
             [io.pedestal.interceptor :as interceptor]
             [io.pedestal.impl.interceptor :refer [terminate]]
-            [ring.util.response :refer [response not-found]]
+            [ring.util.response :refer [response not-found created]]
             [schema.core :as s]))
 
 ;; Utils
@@ -80,45 +80,62 @@
 (def pet-store (atom {}))
 
 (swagger/defhandler get-all-pets
-  {:summary "Get all pets in the store"}
+  {:summary "Get all pets in the store"
+   :responses {:default PetList}}
   [_]
   (response (let [pets (vals (:pets @pet-store))]
               {:total (count pets)
                :pets pets})))
 
 (swagger/defhandler add-pet
-  {:summary "Add a new pet to the store"}
-  [{:keys [errors json-params] :as req}]
+  {:summary "Add a new pet to the store"
+   :params {:body Pet}
+   :responses {400 {:description "Malformed parameters"}}}
+  [{:keys [errors json-params url-for] :as req}]
   (if errors
     (bad-request (pr-str errors))
-    (response (swap! pet-store assoc-in [:pets (:id json-params)] json-params))))
+    (let [store (swap! pet-store assoc-in [:pets (:id json-params)] json-params)]
+      (created (url-for ::get-pet-by-id {:id (:id json-params)})))))
 
 (swagger/defbefore load-pet-from-db
-  {:description "This is run for every pet/:id"}
+  {:description "Assumes a pet exists with given ID"
+   :params {:path {:id s/Int}}
+   :responses {404 {:description "ID does not correspond to any pet"}}}
   [{:keys [request response] :as context}]
-  (if-let [pet (get-in @pet-store [:pets (-> request :path-params :id)])]
-    (assoc-in context [:request :middleware :pet] pet)
+  (if-let [pet (and
+                (not (-> request :errors :path-params :id))
+                (get-in @pet-store [:pets (-> request :path-params :id)]))]
+    (assoc-in context [:request ::pet] pet)
     (-> context
         terminate
         (assoc-in [:response] (not-found "Pet not found")))))
 
 (swagger/defhandler get-pet-by-id
   {:summary "Find pet by ID"
-   :description "Returns a pet based on ID"}
-  [{:keys [path-params] :as req}]
-  (response (get-in @pet-store [:pets (:id path-params)])))
+   :description "Returns a pet based on ID"
+   :responses {:default Pet}}
+  [{:keys [::pet] :as req}]
+  (response pet))
 
 (swagger/defhandler update-pet
-  {:summary "Update an existing pet"}
+  {:summary "Update an existing pet"
+   :params {:body Pet}
+   :responses {400 {:description "Malformed parameters"}}}
   [{:keys [errors path-params json-params] :as req}]
   (if errors
     (bad-request (pr-str errors))
-    (response (swap! pet-store assoc-in [:pets (:id path-params)] json-params))))
+    (let [store (swap! pet-store assoc-in [:pets (:id path-params)] json-params)]
+      (response "OK"))))
 
 (swagger/defhandler update-pet-with-form
-  {:summary "Updates a pet in the store with form data"}
-  [{:keys [path-params form-params] :as req}]
-  (response (swap! pet-store update-in [:pets (:id path-params)] merge form-params)))
+  {:summary "Updates a pet in the store with form data"
+   :params {:form PartialPet}
+   :responses {400 {:description "Malformed parameters"}}}
+  [{:keys [errors path-params form-params] :as req}]
+  (if errors
+    (bad-request (pr-str errors))
+    (let [store (swap! pet-store update-in [:pets (:id path-params)] merge form-params)]
+      (response "OK"))))
 
 ;
 
@@ -147,7 +164,9 @@
     ["/" ^:interceptors [(body-params/body-params)
                          bootstrap/json-body
                          (merge-body)
-                         (keywordize-params :form-params :headers)]
+                         (keywordize-params :form-params :headers)
+                         (swagger/coerce-params)
+                         (swagger/validate-response)]
      ["/pet"
       {:get get-all-pets}
       {:post add-pet}

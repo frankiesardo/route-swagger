@@ -28,17 +28,35 @@
          "conf.js" (response (str "window.API_CONF = {url: \"" (url-for ::doc/swagger-object) "\"};"))
          (resource-response res {:root "swagger-ui/"}))))))
 
-(interceptor/defon-request coerce-params
-  [{:keys [request route-name]}]
-  (if-let [schema (:pre (docs route-name))]
-    (schema/coerce-params schema request)
-    request))
+(interceptor/definterceptorfn coerce-params
+  "f is a function that accepts a params schema and a request and returns a new
+   request.
+   The no args implementation coerces the request with a standard string coercer,
+   assoc an :errors key in the response if there are any coercion errors, otherwise
+   deep merges back the coercion result into the request (effectively overriding the
+   original values with the coerced ones). That function also treates the header and
+   query params subchemas as loose schemas, so if there are more keys than specified
+   no error will be raised."
+  ([] (coerce-params schema/coerce-params))
+  ([f]
+     (interceptor/on-request
+      (fn [{:keys [request route-name]}]
+        (if-let [schema (:params (docs route-name))]
+          (f schema request)
+          request)))))
 
-(interceptor/defon-response validate-responses
-  [{:keys [response route-name]}]
-  (if-let [schema (:post (docs route-name))]
-    (schema/validate-responses schema response)
-    response))
+(interceptor/definterceptorfn validate-response
+  "f is a function that accepts a responses schema and a response and returns a new
+   response.
+   The no args implementation throws an exception if the response model does not match   the equivalent model for the same status code in the responses schema or the
+   :default model if the returned status code could not be matched."
+  ([] (validate-response schema/validate-response))
+  ([f]
+     (interceptor/on-response
+      (fn [{:keys [response route-name]}]
+        (if-let [schema (:responses (docs route-name))]
+          (f schema response)
+          response)))))
 
 (defmacro defroutes [name route-spec]
   `(let [route-table# (expand-routes (quote ~route-spec))]
