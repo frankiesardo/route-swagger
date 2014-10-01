@@ -1,10 +1,8 @@
 (ns pedestal.swagger.core
   (:require [pedestal.swagger.doc :as doc]
             [pedestal.swagger.schema :as schema]
-            [io.pedestal.http.route.definition :as d :refer [expand-routes]]
-            [io.pedestal.http.route.definition.verbose :as v]
+            [io.pedestal.http.route.definition :refer [expand-routes]]
             [io.pedestal.interceptor :as interceptor]
-            [io.pedestal.http.route :as route]
             [ring.util.response :refer [response resource-response redirect]]))
 
 (def docs {})
@@ -15,18 +13,16 @@
     (interceptor/handler
      ::doc/swagger-object
      (fn [request]
-       (response (dissoc docs :operations))))
+       (response (docs ::doc/swagger-object))))
     {::doc/swagger-object doc-spec}))
 
-(def swagger-ui
-  (interceptor/handler
-   ::doc/swagger-ui
-   (fn [{:keys [path-params path-info url-for] :as req}]
-     (let [res (:resource path-params)]
-       (case res
-         "" (redirect (str path-info "index.html"))
-         "conf.js" (response (str "window.API_CONF = {url: \"" (url-for ::doc/swagger-object) "\"};"))
-         (resource-response res {:root "swagger-ui/"}))))))
+(interceptor/defhandler swagger-ui
+  [{:keys [path-params path-info url-for] :as req}]
+  (let [res (:resource path-params)]
+    (case res
+      "" (redirect (str path-info "index.html"))
+      "conf.js" (response (str "window.API_CONF = {url: \"" (url-for ::doc/swagger-object) "\"};"))
+      (resource-response res {:root "swagger-ui/"}))))
 
 (interceptor/definterceptorfn coerce-params
   "f is a function that accepts a params schema and a request and returns a new
