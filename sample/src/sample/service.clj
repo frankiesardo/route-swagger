@@ -166,7 +166,7 @@
                          (merge-body)
                          (keywordize-params :form-params :headers)
                          (swagger/coerce-params)
-;                         (swagger/validate-response)
+                         (swagger/validate-response)
                          ]
      ["/pet"
       {:get get-all-pets}

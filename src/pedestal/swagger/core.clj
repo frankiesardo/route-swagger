@@ -42,7 +42,7 @@
      (interceptor/before
       (fn [{:keys [request route] :as context}]
         (assoc context :request
-               (if-let [schema (:params (docs (:route-name route)))]
+               (if-let [schema (->> route :route-name docs :params)]
                  (f schema request)
                  request))))))
 
@@ -54,9 +54,9 @@
   ([] (validate-response schema/validate-response))
   ([f]
      (interceptor/after
-      (fn [{:keys [response route-name] :as context}]
+      (fn [{:keys [response route] :as context}]
         (assoc context :response
-               (if-let [schema (:responses (docs route-name))]
+               (if-let [schema (->> route :route-name docs :responses)]
                  (f schema response)
                  response))))))
 

@@ -28,6 +28,7 @@
       (merge request result))))
 
 (defn validate-response [responses-schema {:keys [status body] :as response}]
-  (if-let [{:keys [schema]} (get-in responses-schema [status :model])]
-    (s/validate schema body)
-    (s/validate (get responses-schema :default s/Any) body)))
+  (assoc response :body
+         (if-let [{:keys [schema]} (get responses-schema status)]
+           (if schema (s/validate schema body) body)
+           (s/validate (get responses-schema :default s/Any) body))))
