@@ -91,11 +91,11 @@
   {:summary "Add a new pet to the store"
    :params {:body Pet}
    :responses {400 {:description "Malformed parameters"}}}
-  [{:keys [errors json-params url-for] :as req}]
+  [{:keys [errors body-params] :as req}]
   (if errors
     (bad-request (pr-str errors))
-    (let [store (swap! pet-store assoc-in [:pets (:id json-params)] json-params)]
-      (created (url-for ::get-pet-by-id {:id (:id json-params)})))))
+    (let [store (swap! pet-store assoc-in [:pets (:id body-params)] body-params)]
+      (created (route/url-for ::get-pet-by-id :params {:id (:id body-params)}) ""))))
 
 (swagger/defbefore load-pet-from-db
   {:description "Assumes a pet exists with given ID"
@@ -166,7 +166,8 @@
                          (merge-body)
                          (keywordize-params :form-params :headers)
                          (swagger/coerce-params)
-                         (swagger/validate-response)]
+;                         (swagger/validate-response)
+                         ]
      ["/pet"
       {:get get-all-pets}
       {:post add-pet}

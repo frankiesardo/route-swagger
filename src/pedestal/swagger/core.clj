@@ -39,11 +39,12 @@
    no error will be raised."
   ([] (coerce-params schema/coerce-params))
   ([f]
-     (interceptor/on-request
-      (fn [{:keys [request route-name]}]
-        (if-let [schema (:params (docs route-name))]
-          (f schema request)
-          request)))))
+     (interceptor/before
+      (fn [{:keys [request route] :as context}]
+        (assoc context :request
+               (if-let [schema (:params (docs (:route-name route)))]
+                 (f schema request)
+                 request))))))
 
 (interceptor/definterceptorfn validate-response
   "f is a function that accepts a responses schema and a response and returns a new
@@ -52,11 +53,12 @@
    :default model if the returned status code could not be matched."
   ([] (validate-response schema/validate-response))
   ([f]
-     (interceptor/on-response
-      (fn [{:keys [response route-name]}]
-        (if-let [schema (:responses (docs route-name))]
-          (f schema response)
-          response)))))
+     (interceptor/after
+      (fn [{:keys [response route-name] :as context}]
+        (assoc context :response
+               (if-let [schema (:responses (docs route-name))]
+                 (f schema response)
+                 response))))))
 
 (defmacro defroutes [name route-spec]
   `(let [route-table# (expand-routes (quote ~route-spec))]

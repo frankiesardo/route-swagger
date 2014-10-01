@@ -1,16 +1,32 @@
 (ns pedestal.swagger.doc
-  (:require [pedestal.swagger.schema :as schema]
-            [io.pedestal.http.route :as route]
-            [ring.swagger.core :as swagger]))
+  (:require [ring.swagger.core :as swagger]
+            [io.pedestal.http.route :as route]))
+
+(defn- deep-merge-with
+  "Like merge-with, but merges maps recursively, applying the given fn
+  only when there's a non-map at a particular level.
+
+  (deep-merge-with + {:a {:b {:c 1 :d {:x 1 :y 2}} :e 3} :f 4}
+                     {:a {:b {:c 2 :d {:z 9} :z 3} :e 100}})
+  -> {:a {:b {:z 3, :c 3, :d {:z 9, :x 1, :y 2}}, :e 103}, :f 4}"
+  [f & maps]
+  (apply
+   (fn m [& maps]
+     (if (every? map? maps)
+       (apply merge-with m maps)
+       (apply f maps)))
+   maps))
+
+(def deep-merge (partial deep-merge-with (fn [& args] (last args))))
 
 (defn- routes->operations [route-table]
   (for [{:keys [interceptors] :as route} route-table
         :let [handler-docs (first (keep (comp ::handler meta) interceptors))
               middleware (keep (comp ::middleware meta) interceptors)]
         :when handler-docs]
-    (if-let [middleware-docs (apply schema/deep-merge middleware)]
-      (schema/deep-merge route middleware-docs handler-docs)
-      (schema/deep-merge route handler-docs))))
+    (if-let [middleware-docs (apply deep-merge middleware)]
+      (deep-merge route middleware-docs handler-docs)
+      (deep-merge route handler-docs))))
 
 (defn- routes->swagger-object [route-table]
   (->> route-table
