@@ -75,6 +75,19 @@
    (opt :last-name) s/Str
    (opt :status) (s/enum "registered" "active" "closed")})
 
+;
+
+(s/defschema NewOrder
+  {(req :pet-id) s/Int
+   (req :user-id) s/Int
+   (opt :notes) s/Str})
+
+(s/defschema Order
+  (assoc NewOrder
+    (req :id) s/Int
+    (req :status) s/Str
+    (req :ship-date) s/Inst))
+
 ;; Store
 
 (def pet-store (atom {}))
@@ -140,16 +153,54 @@
 ;
 
 (swagger/defhandler add-user
-  {:summary "Create user"}
-  [{:keys [errors json-params] :as req}]
+  {:summary "Create user"
+   :params {:body User}}
+  [{:keys [errors body-params] :as req}]
   (if errors
     (bad-request (pr-str errors))
-    (response (swap! pet-store assoc-in [:users (:username json-params)] json-params))))
+    (let [store (swap! pet-store assoc-in [:users (:username body-params)] body-params)]
+      (created (route/url-for ::get-user-by-name :params {:username (:username body-params)}) ""))))
 
 (swagger/defhandler get-user-by-name
-  {:summary "Get user by name"}
+  {:summary "Get user by name"
+   :params {:path {:username s/Str}}
+   :responses {:default User
+               404 {:description "User could not be found on the store"}}}
   [{:keys [path-params] :as req}]
-  (response (get-in @pet-store [:users (:username path-params)])))
+  (if-let [user (get-in @pet-store [:users (:username path-params)])]
+    (response user)
+    (not-found "User not found")))
+
+;
+
+(swagger/defhandler add-order
+  {:summary "Create order"
+   :params {:body NewOrder}}
+  [{:keys [errors body-params] :as req}]
+  (if errors
+    (bad-request (pr-str errors))
+    (let [id (rand-int 1000000)
+          store (swap! pet-store assoc-in [:orders id] (assoc body-params :id id))]
+      (created (route/url-for ::get-order-by-id :params {:id id}) ""))))
+
+(swagger/defbefore load-order-from-db
+  {:description "Assumes an order exists with given ID"
+   :params {:path {:id s/Int}}
+   :responses {404 {:description "ID does not correspond to any order"}}}
+  [{:keys [request response] :as context}]
+  (if-let [order (and
+                  (not (-> request :errors :path-params :id))
+                  (get-in @pet-store [:orders (-> request :path-params :id)]))]
+    (assoc-in context [:request ::order] order)
+    (-> context
+        terminate
+        (assoc-in [:response] (not-found "Order not found")))))
+
+(swagger/defhandler get-order-by-id
+  {:summary "Get user by name"
+   :responses {:default Order}}
+  [{:keys [::order] :as req}]
+  (response (assoc order :status "Pending" :ship-date (java.util.Date.))))
 
 ;;;; Routes
 
@@ -166,8 +217,7 @@
                          (merge-body)
                          (keywordize-params :form-params :headers)
                          (swagger/coerce-params)
-                         (swagger/validate-response)
-                         ]
+                         (swagger/validate-response)]
      ["/pet"
       {:get get-all-pets}
       {:post add-pet}
@@ -177,8 +227,12 @@
        {:patch update-pet-with-form}]]
      ["/user"
       {:post add-user}
-      ["/:username" ;;
+      ["/:username"
        {:get get-user-by-name}]]
+     ["/order"
+      {:post add-order}
+      ["/:id" ^:interceptors [load-order-from-db]
+       {:get get-order-by-id}]]
 
      ["/ui/*resource" {:get swagger/swagger-ui}]
      ["/docs" {:get [(swagger/swagger-object swagger-spec)]}]]]])
