@@ -50,7 +50,4 @@
   (let [operations (routes->operations route-table)
         swagger-object (assoc (routes->swagger-object route-table)
                          :operations operations)]
-    (-> (zipmap (map :route-name operations) operations)
-        (assoc ::swagger-object swagger-object))
-;    (prepare-swagger-object swagger-object)
-    ))
+    (prepare-swagger-object swagger-object)))

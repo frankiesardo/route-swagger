@@ -6,12 +6,15 @@
             [ring.util.response :refer [response resource-response redirect]]))
 
 (def docs
-  "Hold the generated documentation server by the swagger-object
-   endpoint.  It also hols an entry for each endpoint specifying the
-   params and responses schemas for easy access when performing
-   coercion/validation.  You can inspect this var at any time after
+  "Holds the generated documentation server by the swagger-object
+   endpoint.  It is possible to inspect this var at any time after
    compilation to see the generated documentation."
   {})
+
+(defn- present-swagger-object
+  "Todo memoize?"
+  []
+  docs)
 
 (interceptor/definterceptorfn swagger-object
   "Creates an interceptor that serves the generated documentation on
@@ -24,7 +27,7 @@
     (interceptor/handler
      ::doc/swagger-object
      (fn [request]
-       (response (docs ::doc/swagger-object))))
+       (response (present-swagger-object))))
     {::doc/swagger-object doc-spec}))
 
 (interceptor/defhandler swagger-ui
@@ -37,6 +40,12 @@
       "" (redirect (str path-info "index.html"))
       "conf.js" (response (str "window.API_CONF = {url: \"" (url-for ::doc/swagger-object) "\"};"))
       (resource-response res {:root "swagger-ui/"}))))
+
+(defn- route-schemas [{:keys [route-name] :as route}]
+  (->> docs
+       :operations
+       (filter #(= (:route-name %) route-name))
+       first))
 
 (interceptor/definterceptorfn coerce-params
   "f is a function that accepts a params schema and a request and
@@ -52,7 +61,7 @@
      (interceptor/before
       (fn [{:keys [request route] :as context}]
         (assoc context :request
-               (if-let [schema (->> route :route-name docs :params)]
+               (if-let [schema (->> route :route-name route-schemas :params)]
                  (f schema request)
                  request))))))
 
@@ -67,7 +76,7 @@
      (interceptor/after
       (fn [{:keys [response route] :as context}]
         (assoc context :response
-               (if-let [schema (->> route :route-name docs :responses)]
+               (if-let [schema (->> route :route-name route-schemas :responses)]
                  (f schema response)
                  response))))))
 
