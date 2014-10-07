@@ -36,8 +36,10 @@
        (keep (comp ::swagger-object meta))
        first))
 
-(defn- prepare-swagger-object [swagger-object]
-  swagger-object)
+(defn- prepare-swagger-object [swagger-object operations]
+  (->> operations
+       (group-by :path)
+       (assoc swagger-object :paths)))
 
 (defn generate-docs
   "Given a route table extracts the swagger documentation contained in
@@ -48,6 +50,5 @@
   coercion/validation."
   [route-table]
   (let [operations (routes->operations route-table)
-        swagger-object (assoc (routes->swagger-object route-table)
-                         :operations operations)]
-    (prepare-swagger-object swagger-object)))
+        swagger-object (routes->swagger-object route-table)]
+    (prepare-swagger-object swagger-object operations)))

@@ -12,10 +12,10 @@
    :form    :form-params
    :path    :path-params
    :query   :query-params
-   :headers :headers})
+   :header  :headers})
 
 (defn- loosen-schema [[k v]]
-  (if (#{:query :headers} k)
+  (if (#{:query :header} k)
     [k (assoc v s/Any s/Any)]
     [k v]))
 

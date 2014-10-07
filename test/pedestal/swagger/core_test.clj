@@ -11,13 +11,13 @@
 
 (defhandler handler1
   {:description "Handler 1"
-   :params {:path {:id s/Str}}
-   :responses {:default s/Str}}
+   :parameters {:path {:id s/Str}}
+   :responses {400 s/Str}}
   [_] ok-response)
 
 (defhandler handler2
   {:description "Handler 2"
-   :params {:path {:id s/Int}}
+   :parameters {:header {:id s/Int}}
    :responses {:default s/Int}}
   [_] ok-response)
 
@@ -29,13 +29,20 @@
                 `[[["/a/:b/c" {:post handler1}]
                    ["/x/:y/z" {:patch handler2}]
                    ["/docs" {:get [(swagger-object doc-spec)]}]]])
-        {:keys [operations] :as docs} (doc/generate-docs routes)]
+        {:keys [paths] :as docs} (doc/generate-docs routes)]
     (testing "Produces correct documentation"
       (is (= "Test" (:title docs)))
-      (is (= [{:route-name ::handler1
-               :params {:path {:id s/Str}}
-               :responses {:default s/Str}}
-              {:route-name ::handler2
-               :params {:path {:id s/Int}}
-               :responses {:default s/Int}}]
-             (map #(select-keys % [:route-name :params :responses]) operations))))))
+      (is (= {"/a/:b/c" [{:route-name ::handler1
+                          :method :post
+                          :parameters {:path {:id s/Str}}
+                          :responses {400 s/Str}}]
+              "/x/:y/z" [{:route-name ::handler2
+                          :method :patch
+                          :parameters {:header {:id s/Int}}
+                          :responses {:default s/Int}}]}
+             (into {} (for [[path operations] paths]
+                        [path (for [op operations]
+                                (select-keys op [:route-name
+                                                 :method
+                                                 :parameters
+                                                 :responses]))])))))))

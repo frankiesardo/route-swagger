@@ -102,7 +102,7 @@
 
 (swagger/defhandler add-pet
   {:summary "Add a new pet to the store"
-   :params {:body Pet}
+   :parameters {:body Pet}
    :responses {400 {:description "Malformed parameters"}}}
   [{:keys [errors body-params] :as req}]
   (if errors
@@ -112,7 +112,7 @@
 
 (swagger/defbefore load-pet-from-db
   {:description "Assumes a pet exists with given ID"
-   :params {:path {:id s/Int}}
+   :parameters {:path {:id s/Int}}
    :responses {404 {:description "ID does not correspond to any pet"}}}
   [{:keys [request response] :as context}]
   (if-let [pet (and
@@ -132,7 +132,7 @@
 
 (swagger/defhandler update-pet
   {:summary "Update an existing pet"
-   :params {:body Pet}
+   :parameters {:body Pet}
    :responses {400 {:description "Malformed parameters"}}}
   [{:keys [errors path-params json-params] :as req}]
   (if errors
@@ -142,7 +142,7 @@
 
 (swagger/defhandler update-pet-with-form
   {:summary "Updates a pet in the store with form data"
-   :params {:form PartialPet}
+   :parameters {:form PartialPet}
    :responses {400 {:description "Malformed parameters"}}}
   [{:keys [errors path-params form-params] :as req}]
   (if errors
@@ -154,7 +154,7 @@
 
 (swagger/defhandler add-user
   {:summary "Create user"
-   :params {:body User}}
+   :parameters {:body User}}
   [{:keys [errors body-params] :as req}]
   (if errors
     (bad-request (pr-str errors))
@@ -163,7 +163,7 @@
 
 (swagger/defhandler get-user-by-name
   {:summary "Get user by name"
-   :params {:path {:username s/Str}}
+   :parameters {:path {:username s/Str}}
    :responses {:default User
                404 {:description "User could not be found on the store"}}}
   [{:keys [path-params] :as req}]
@@ -175,7 +175,7 @@
 
 (swagger/defhandler add-order
   {:summary "Create order"
-   :params {:body NewOrder}}
+   :parameters {:body NewOrder}}
   [{:keys [errors body-params] :as req}]
   (if errors
     (bad-request (pr-str errors))
@@ -185,7 +185,7 @@
 
 (swagger/defbefore load-order-from-db
   {:description "Assumes an order exists with given ID"
-   :params {:path {:id s/Int}}
+   :parameters {:path {:id s/Int}}
    :responses {404 {:description "ID does not correspond to any order"}}}
   [{:keys [request response] :as context}]
   (if-let [order (and

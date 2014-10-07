@@ -43,7 +43,8 @@
 
 (defn- route-schemas [{:keys [route-name] :as route}]
   (->> docs
-       :operations
+       :paths
+       (mapcat val)
        (filter #(= (:route-name %) route-name))
        first))
 
@@ -61,7 +62,7 @@
      (interceptor/before
       (fn [{:keys [request route] :as context}]
         (assoc context :request
-               (if-let [schema (->> route :route-name route-schemas :params)]
+               (if-let [schema (->> route :route-name route-schemas :parameters)]
                  (f schema request)
                  request))))))
 
