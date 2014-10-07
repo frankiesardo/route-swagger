@@ -21,7 +21,8 @@
 
 (defn- routes->operations [route-table]
   (for [{:keys [interceptors] :as route} route-table
-        :let [handler-docs (first (keep (comp ::handler meta) interceptors))
+        :let [route (select-keys route [:route-name :path :method])
+              handler-docs (first (keep (comp ::handler meta) interceptors))
               middleware (keep (comp ::middleware meta) interceptors)]
         :when handler-docs]
     (if-let [middleware-docs (apply deep-merge middleware)]
