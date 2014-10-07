@@ -62,7 +62,7 @@
      (interceptor/before
       (fn [{:keys [request route] :as context}]
         (assoc context :request
-               (if-let [schema (->> route :route-name route-schemas :parameters)]
+               (if-let [schema (->> route route-schemas :parameters)]
                  (f schema request)
                  request))))))
 
@@ -77,7 +77,7 @@
      (interceptor/after
       (fn [{:keys [response route] :as context}]
         (assoc context :response
-               (if-let [schema (->> route :route-name route-schemas :responses)]
+               (if-let [schema (->> route route-schemas :responses)]
                  (f schema response)
                  response))))))
 
