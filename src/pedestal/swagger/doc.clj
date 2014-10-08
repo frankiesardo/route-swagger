@@ -22,12 +22,9 @@
 (defn- routes->operations [route-table]
   (for [{:keys [interceptors] :as route} route-table
         :let [route (select-keys route [:route-name :path :method])
-              handler-docs (first (keep (comp ::handler meta) interceptors))
-              middleware (keep (comp ::middleware meta) interceptors)]
-        :when handler-docs]
-    (if-let [middleware-docs (apply deep-merge middleware)]
-      (deep-merge route middleware-docs handler-docs)
-      (deep-merge route handler-docs))))
+              route-docs (keep (comp ::route meta) interceptors)]
+        :when (seq route-docs)]
+    (apply deep-merge route route-docs)))
 
 (defn- routes->swagger-object [route-table]
   (->> route-table

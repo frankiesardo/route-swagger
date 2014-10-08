@@ -93,42 +93,40 @@
 ;;;;
 
 (defmacro defhandler
-  "Endpoints that want to be recognised as swagger endpoints must be
-  defined using this macro."
   [name doc args & body]
   `(def ~name (with-meta (interceptor/handler (fn ~args ~@body))
-                {::doc/handler ~doc})))
+                {::doc/route ~doc})))
 
 (defmacro defmiddleware
   [name doc before after]
   (let [f1 (cons 'fn before)
         f2 (cons 'fn after)]
     `(def ~name (with-meta (interceptor/middleware ~f1 ~f2)
-                  {::doc/middleware ~doc}))))
+                  {::doc/route ~doc}))))
 
 (defmacro defon-request
   [name doc args & body]
   `(def ~name (with-meta (interceptor/on-request (fn ~args ~@body))
-                {::doc/middleware ~doc})))
+                {::doc/route ~doc})))
 
 (defmacro defon-response
   [name doc args & body]
   `(def ~name (with-meta (interceptor/on-response (fn ~args ~@body))
-                {::doc/middleware ~doc})))
+                {::doc/route ~doc})))
 
 (defmacro defaround
   [name doc before after]
   (let [f1 (cons 'fn before)
         f2 (cons 'fn after)]
     `(def ~name (with-meta (interceptor/middleware ~f1 ~f2)
-                  {::doc/middleware ~doc}))))
+                  {::doc/route ~doc}))))
 
 (defmacro defbefore
   [name doc args & body]
   `(def ~name (with-meta (interceptor/before (fn ~args ~@body))
-                {::doc/middleware ~doc})))
+                {::doc/route ~doc})))
 
 (defmacro defafter
   [name doc args & body]
   `(def ~name (with-meta (interceptor/after (fn ~args ~@body))
-                {::doc/middleware ~doc})))
+                {::doc/route ~doc})))
