@@ -56,7 +56,7 @@
     ["/" ^:interceptors [(pedestal-body-params/body-params)
                          (keywordize-params :headers) (body-params)
                          (coerce-params) (validate-response)]
-     {:patch get-handler}
+     {:get get-handler}
      ["/:id" ^:interceptors [id-middleware]
       {:put put-handler
        :delete delete-handler}]
@@ -132,5 +132,5 @@
        (response-for app :get "http://t/?q=created")
 
        500 {:error {:headers {:h "missing-required-key"}
-                    :body {:result "(not (integer? \"fail\"))"}}}
+                    :body {:result "(not (sequential? \"fail\"))"}}}
        (response-for app :get "http://t/?q=fail")))
