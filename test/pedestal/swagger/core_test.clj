@@ -31,16 +31,16 @@
 
 (defhandler get-handler
   {:summary "Get all resources"
-   :parameters {:query {:q s/Keyword}}
+   :parameters {:query {:q s/Str}}
    :responses {200 {:schema {:status s/Str}}
                400 {:schema {:error s/Any}}
                :default {:schema {:result [s/Str]}
                          :headers [:h]}}}
   [{:keys [query-params]}]
   (case (:q query-params)
-    :ok ok
-    :created {:status 201 :body {:result ["a" "b"]} :headers {:h 4}}
-    :fail {:status 299 :body {:result "fail"} :headers {}}))
+    "ok" ok
+    "created" {:status 201 :body {:result ["a" "b"]} :headers {:h 4}}
+    "fail" {:status 299 :body {:result "fail"} :headers {}}))
 
 (def doc-spec
   {:title "Test"})
@@ -69,7 +69,7 @@
     (is (= "Test" title))
     (is (= {"/" #{{:route-name ::get-handler
                    :method :get
-                   :parameters {:query {:q s/Keyword}}
+                   :parameters {:query {:q s/Str}}
                    :responses {200 {:schema {:status s/Str}}
                                400 {:schema {:error s/Any}}
                                :default {:schema {:result [s/Str]}
@@ -93,7 +93,7 @@
 
 
 (deftest coerces-params
-  #_(are [resp req] (= resp (read-string (:body req)))
+  (are [resp req] (= resp (read-string (:body req)))
        {:status "ok"}
        (response-for app :delete "http://t/1?notify=true" :headers {"Auth" "y"})
 
