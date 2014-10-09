@@ -35,11 +35,11 @@
    :responses {200 {:schema {:status s/Str}}
                400 {:schema {:error s/Any}}
                :default {:schema {:result [s/Str]}
-                         :headers [:h]}}}
+                         :headers ["Location"]}}}
   [{:keys [query-params]}]
   (case (:q query-params)
     "ok" ok
-    "created" {:status 201 :body {:result ["a" "b"]} :headers {:h 4}}
+    "created" {:status 201 :body {:result ["a" "b"]} :headers {"Location" "Here!"}}
     "fail" {:status 299 :body {:result "fail"} :headers {}}))
 
 (def doc-spec
@@ -73,7 +73,7 @@
                    :responses {200 {:schema {:status s/Str}}
                                400 {:schema {:error s/Any}}
                                :default {:schema {:result [s/Str]}
-                                         :headers [:h]}}}}
+                                         :headers ["Location"]}}}}
             "/:id" #{{:route-name ::put-handler
                       :method :put
                       :parameters {:path {:id s/Int}
@@ -131,6 +131,6 @@
        201 {:result ["a" "b"]}
        (response-for app :get "http://t/?q=created")
 
-       500 {:error {:headers {:h "missing-required-key"}
+       500 {:error {:headers {"Location" "missing-required-key"}
                     :body {:result "(not (sequential? \"fail\"))"}}}
        (response-for app :get "http://t/?q=fail")))
