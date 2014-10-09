@@ -8,4 +8,5 @@
                  [io.pedestal/pedestal.service "0.3.0"]
                  [prismatic/schema "0.3.0"]
                  [metosin/ring-swagger "0.12.0"]
-                 [metosin/ring-swagger-ui "2.0.17"]])
+                 [metosin/ring-swagger-ui "2.0.17"]]
+  :profiles {:dev {:dependencies [[io.pedestal/pedestal.jetty "0.1.5"]]}})

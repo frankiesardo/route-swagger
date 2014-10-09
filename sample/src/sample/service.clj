@@ -9,34 +9,6 @@
             [ring.util.response :refer [response not-found created]]
             [schema.core :as s]))
 
-;; Utils
-
-(defn bad-request
-  "Returns a Ring response for an HTTP 400 bad request"
-  [body]
-  {:status  400
-   :headers {}
-   :body    body})
-
-(interceptor/definterceptorfn keywordize-params
-  [& ks]
-  (interceptor/on-request
-   ::keywordize
-   (fn [request]
-     (->> (map (partial get request) ks)
-          (map #(zipmap (map keyword (keys %)) (vals %)))
-          (zipmap ks)
-          (apply merge (apply dissoc request ks))))))
-
-(interceptor/definterceptorfn merge-body
-  ([] (merge-body :json-params :edn-params))
-  ([& ks]
-     (interceptor/on-request
-      ::merge-body
-      (fn [request]
-        (->> (map (partial get request) ks)
-             (apply merge)
-             (assoc request :body-params))))))
 
 ;;;; Schemas
 
@@ -88,13 +60,15 @@
     (req :status) s/Str
     (req :ship-date) s/Inst))
 
+;
+
 ;; Store
 
 (def pet-store (atom {}))
 
 (swagger/defhandler get-all-pets
   {:summary "Get all pets in the store"
-   :responses {:default PetList}}
+   :responses {200 {:schema PetList}}}
   [_]
   (response (let [pets (vals (:pets @pet-store))]
               {:total (count pets)
@@ -103,12 +77,11 @@
 (swagger/defhandler add-pet
   {:summary "Add a new pet to the store"
    :parameters {:body Pet}
-   :responses {400 {:description "Malformed parameters"}}}
+   :responses {201 {:headers ["Location"]}
+               400 {:description "Malformed parameters"}}}
   [{:keys [errors body-params] :as req}]
-  (if errors
-    (bad-request (pr-str errors))
-    (let [store (swap! pet-store assoc-in [:pets (:id body-params)] body-params)]
-      (created (route/url-for ::get-pet-by-id :params {:id (:id body-params)}) ""))))
+  (let [store (swap! pet-store assoc-in [:pets (:id body-params)] body-params)]
+      (created (route/url-for ::get-pet-by-id :params {:id (:id body-params)}) "")))
 
 (swagger/defbefore load-pet-from-db
   {:description "Assumes a pet exists with given ID"
@@ -126,7 +99,7 @@
 (swagger/defhandler get-pet-by-id
   {:summary "Find pet by ID"
    :description "Returns a pet based on ID"
-   :responses {:default Pet}}
+   :responses {200 {:schema Pet}}}
   [{:keys [::pet] :as req}]
   (response pet))
 
@@ -135,36 +108,31 @@
    :parameters {:body Pet}
    :responses {400 {:description "Malformed parameters"}}}
   [{:keys [errors path-params json-params] :as req}]
-  (if errors
-    (bad-request (pr-str errors))
-    (let [store (swap! pet-store assoc-in [:pets (:id path-params)] json-params)]
-      (response "OK"))))
+  (let [store (swap! pet-store assoc-in [:pets (:id path-params)] json-params)]
+    (response "OK")))
 
 (swagger/defhandler update-pet-with-form
   {:summary "Updates a pet in the store with form data"
    :parameters {:form PartialPet}
    :responses {400 {:description "Malformed parameters"}}}
   [{:keys [errors path-params form-params] :as req}]
-  (if errors
-    (bad-request (pr-str errors))
-    (let [store (swap! pet-store update-in [:pets (:id path-params)] merge form-params)]
-      (response "OK"))))
+  (let [store (swap! pet-store update-in [:pets (:id path-params)] merge form-params)]
+    (response "OK")))
 
 ;
 
 (swagger/defhandler add-user
   {:summary "Create user"
-   :parameters {:body User}}
+   :parameters {:body User}
+   :responses {201 {:headers ["Location"]}}}
   [{:keys [errors body-params] :as req}]
-  (if errors
-    (bad-request (pr-str errors))
-    (let [store (swap! pet-store assoc-in [:users (:username body-params)] body-params)]
-      (created (route/url-for ::get-user-by-name :params {:username (:username body-params)}) ""))))
+  (let [store (swap! pet-store assoc-in [:users (:username body-params)] body-params)]
+    (created (route/url-for ::get-user-by-name :params {:username (:username body-params)}) "")))
 
 (swagger/defhandler get-user-by-name
   {:summary "Get user by name"
    :parameters {:path {:username s/Str}}
-   :responses {:default User
+   :responses {200 {:schema User}
                404 {:description "User could not be found on the store"}}}
   [{:keys [path-params] :as req}]
   (if-let [user (get-in @pet-store [:users (:username path-params)])]
@@ -175,13 +143,12 @@
 
 (swagger/defhandler add-order
   {:summary "Create order"
-   :parameters {:body NewOrder}}
+   :parameters {:body NewOrder}
+   :responses {201 {:headers ["Location"]}}}
   [{:keys [errors body-params] :as req}]
-  (if errors
-    (bad-request (pr-str errors))
-    (let [id (rand-int 1000000)
-          store (swap! pet-store assoc-in [:orders id] (assoc body-params :id id))]
-      (created (route/url-for ::get-order-by-id :params {:id id}) ""))))
+  (let [id (rand-int 1000000)
+        store (swap! pet-store assoc-in [:orders id] (assoc body-params :id id))]
+    (created (route/url-for ::get-order-by-id :params {:id id}) "")))
 
 (swagger/defbefore load-order-from-db
   {:description "Assumes an order exists with given ID"
@@ -198,7 +165,7 @@
 
 (swagger/defhandler get-order-by-id
   {:summary "Get user by name"
-   :responses {:default Order}}
+   :responses {200 {:schema Order}}}
   [{:keys [::order] :as req}]
   (response (assoc order :status "Pending" :ship-date (java.util.Date.))))
 
@@ -214,8 +181,8 @@
   [[:http "localhost" 8080
     ["/" ^:interceptors [(body-params/body-params)
                          bootstrap/json-body
-                         (merge-body)
-                         (keywordize-params :form-params :headers)
+                         (swagger/body-params)
+                         (swagger/keywordize-params :form-params :headers)
                          (swagger/coerce-params)
                          (swagger/validate-response)]
      ["/pet"

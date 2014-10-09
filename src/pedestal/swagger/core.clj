@@ -61,10 +61,9 @@
   ([f]
      (interceptor/before
       (fn [{:keys [request route] :as context}]
-        (assoc context :request
-               (if-let [schema (->> route route-schemas :parameters)]
-                 (f schema request)
-                 request))))))
+        (if-let [schema (->> route route-schemas :parameters)]
+          (f schema context)
+          context)))))
 
 (interceptor/definterceptorfn validate-response
   "f is a function that accepts a responses schema and a response and
@@ -76,10 +75,11 @@
   ([f]
      (interceptor/after
       (fn [{:keys [response route] :as context}]
-        (assoc context :response
-               (if-let [schema (->> route route-schemas :responses)]
-                 (f schema response)
-                 response))))))
+        (if-let [schemas (->> route route-schemas :responses)]
+          (if-let [schema (or (schemas (:status response)) (schemas :default))]
+            (f schema context)
+            context)
+          context)))))
 
 (defmacro defroutes
   "A drop-in replacement for pedestal's defroutes.  In addition to
@@ -118,7 +118,7 @@
   [name doc before after]
   (let [f1 (cons 'fn before)
         f2 (cons 'fn after)]
-    `(def ~name (with-meta (interceptor/middleware ~f1 ~f2)
+    `(def ~name (with-meta (interceptor/around ~f1 ~f2)
                   {::doc/route ~doc}))))
 
 (defmacro defbefore
@@ -130,3 +130,25 @@
   [name doc args & body]
   `(def ~name (with-meta (interceptor/after (fn ~args ~@body))
                 {::doc/route ~doc})))
+
+;;
+
+(interceptor/definterceptorfn keywordize-params
+  [& ks]
+  (interceptor/on-request
+   ::keywordize-params
+   (fn [request]
+     (->> (map (partial get request) ks)
+          (map #(zipmap (map keyword (keys %)) (vals %)))
+          (zipmap ks)
+          (apply merge (apply dissoc request ks))))))
+
+(interceptor/definterceptorfn body-params
+  ([] (body-params :json-params :edn-params))
+  ([& ks]
+     (interceptor/on-request
+      ::body-params
+      (fn [request]
+        (->> (map (partial get request) ks)
+             (apply merge)
+             (assoc request :body-params))))))
