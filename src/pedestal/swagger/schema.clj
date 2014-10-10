@@ -46,9 +46,6 @@
        (into {})
        (loosen)))
 
-(defn- coerce [schema value]
-  ((c/coercer schema c/+string-coercions+) value))
-
 (def ^:private request-default
   "So that we don't get too general errors like 'path-params: missing-required-key'"
   {:body-params nil
@@ -57,15 +54,19 @@
    :query-params {}
    :headers {}})
 
-(defn coerce-params [schema {:keys [request] :as context}]
-  (let [request-schema (->request-schema schema)
-        result (coerce request-schema (merge request-default request))]
+(defn- coerce [schema value]
+  ((c/coercer schema c/+string-coercions+) value))
+
+(defn coerce-params [schema request]
+  (coerce (->request-schema schema)
+          (merge request-default request)))
+
+(defn ?bad-request [schema {:keys [request] :as context}]
+  (let [result (coerce-params schema request)]
     (if (u/error? result)
       (assoc (terminate context)
         :response {:status 400 :headers {} :body (explain result)})
       (assoc context :request result))))
-
-;;
 
 (defn- ->response-schema [{:keys [headers schema]}]
   (->> (for [h headers]
@@ -76,16 +77,19 @@
        (apply array-map)
        (loosen)))
 
-(defn- validate [schema value]
-  ((c/coercer schema {}) value))
-
 (def ^:private response-default
   {:headers {}
    :body nil})
 
-(defn validate-response [schema {:keys [response] :as context}]
-  (let [response-schema (->response-schema schema)
-        result (validate response-schema (merge response-default response))]
+(defn- validate [schema value]
+  ((c/coercer schema {}) value))
+
+(defn validate-response [schema response]
+  (validate (->response-schema schema)
+            (merge response-default response)))
+
+(defn ?internal-server-error [schema {:keys [response] :as context}]
+  (let [result (validate-response schema response)]
     (if (u/error? result)
       (assoc context :response {:status 500 :headers {} :body (explain result)})
       context)))

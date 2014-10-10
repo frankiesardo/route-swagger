@@ -57,7 +57,7 @@
    the original values with the coerced ones). That function also
    treates the header and query params subchemas as loose schemas, so
    if there are more keys than specified no error will be raised."
-  ([] (coerce-params schema/coerce-params))
+  ([] (coerce-params schema/?bad-request))
   ([f]
      (interceptor/before
       (fn [{:keys [request route] :as context}]
@@ -71,7 +71,7 @@
    exception if the response model does not match the equivalent model
    for the same status code in the responses schema or the :default
    model if the returned status code could not be matched."
-  ([] (validate-response schema/validate-response))
+  ([] (validate-response schema/?internal-server-error))
   ([f]
      (interceptor/after
       (fn [{:keys [response route] :as context}]
