@@ -49,9 +49,17 @@
 (defn- coerce [schema value]
   ((c/coercer schema c/+string-coercions+) value))
 
+(def ^:private request-default
+  "So that we don't get too general errors like 'path-params: missing-required-key'"
+  {:body-params nil
+   :form-params {}
+   :path-params {}
+   :query-params {}
+   :headers {}})
+
 (defn coerce-params [schema {:keys [request] :as context}]
   (let [request-schema (->request-schema schema)
-        result (coerce request-schema request)]
+        result (coerce request-schema (merge request-default request))]
     (if (u/error? result)
       (assoc (terminate context)
         :response {:status 400 :headers {} :body (explain result)})
@@ -71,9 +79,13 @@
 (defn- validate [schema value]
   ((c/coercer schema {}) value))
 
+(def ^:private response-default
+  {:headers {}
+   :body nil})
+
 (defn validate-response [schema {:keys [response] :as context}]
   (let [response-schema (->response-schema schema)
-        result (validate response-schema response)]
+        result (validate response-schema (merge response-default response))]
     (if (u/error? result)
       (assoc context :response {:status 500 :headers {} :body (explain result)})
       context)))

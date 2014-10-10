@@ -99,7 +99,7 @@
        {:error {:headers {:auth "missing-required-key"}}}
        (response-for app :delete "http://t/1?notify=true")
 
-       {:error {:query-params "missing-required-key"}}
+       {:error {:query-params {:notify "missing-required-key"}}}
        (response-for app :delete "http://t/1" :headers {"Auth" "y"})
 
        {:error {:path-params {:id "(not (integer? W))"}}}
@@ -123,9 +123,8 @@
        200 {:status "ok"}
        (response-for app :get "http://t/?q=ok")
 
-       400 {:error {:query-params "missing-required-key"}}
+       400 {:error {:query-params {:q "missing-required-key"}}}
        (response-for app :get "http://t/")
-
 
        201 {:result ["a" "b"]}
        (response-for app :get "http://t/?q=created")
