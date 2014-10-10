@@ -8,11 +8,6 @@
             [io.pedestal.http.body-params :as pedestal-body-params]
             [io.pedestal.http :as bootstrap]))
 
-(def ok
-  {:status 200
-   :body {:status "ok"}
-   :headers {}})
-
 (defon-request id-middleware
   {:description "Requires id and auth"
    :parameters {:path {:id s/Int}
@@ -22,12 +17,16 @@
 (defhandler put-handler
   {:summary "Put resource with id"
    :parameters {:body {:name s/Keyword}}}
-  [_] ok)
+  [{:keys [body-params path-params headers]}]
+  {:status 200 :headers {}
+   :body {:params (merge body-params path-params (select-keys headers [:auth]))}})
 
 (defhandler delete-handler
   {:summary "Delete resource with id"
    :parameters {:query {:notify s/Bool}}}
-  [_] ok)
+  [{:keys [query-params path-params headers]}]
+  {:status 200 :headers {}
+   :body {:params (merge query-params path-params (select-keys headers [:auth]))}})
 
 (defhandler get-handler
   {:summary "Get all resources"
@@ -38,7 +37,7 @@
                          :headers ["Location"]}}}
   [{:keys [query-params]}]
   (case (:q query-params)
-    "ok" ok
+    "ok" {:status 200 :body {:status "ok"} :headers {}}
     "created" {:status 201 :body {:result ["a" "b"]} :headers {"Location" "Here!"}}
     "fail" {:status 299 :body {:result "fail"} :headers {}}))
 
@@ -94,7 +93,7 @@
 
 (deftest coerces-params
   (are [resp req] (= resp (read-string (:body req)))
-       {:status "ok"}
+       {:params {:auth "y", :id 1, :notify true}}
        (response-for app :delete "http://t/1?notify=true" :headers {"Auth" "y"})
 
        {:error {:headers {:auth "missing-required-key"}}}
@@ -112,7 +111,7 @@
                                "Content-Type" "application/edn"}
                      :body (pr-str {:name 3}))
 
-       {:status "ok"}
+       {:params {:auth "y", :id 1, :name :foo}}
        (response-for app :put "http://t/1"
                      :headers {"Auth" "y"
                                "Content-Type" "application/edn"}
