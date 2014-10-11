@@ -30,16 +30,20 @@
        (response (present-swagger-object))))
     {::doc/swagger-object doc-spec}))
 
-(interceptor/defhandler swagger-ui
+(interceptor/definterceptorfn swagger-ui
   "Serves the swagger ui on a path of your choice. Note that the path
   MUST specify a splat argument named \"resource\"
   e.g. \"my-path/*resource\""
-  [{:keys [path-params path-info url-for] :as req}]
-  (let [res (:resource path-params)]
-    (case res
-      "" (redirect (str path-info "index.html"))
-      "conf.js" (response (str "window.API_CONF = {url: \"" (url-for ::doc/swagger-object) "\"};"))
-      (resource-response res {:root "swagger-ui/"}))))
+  [& path-opts]
+  (interceptor/handler
+   ::doc/swagger-ui
+   (fn [{:keys [path-params path-info url-for] :as request}]
+     (let [res (:resource path-params)]
+       (case res
+         "" (redirect (str path-info "index.html"))
+         "conf.js" (response (str "window.API_CONF = {url: \""
+                                  (apply url-for ::doc/swagger-object path-opts) "\"};"))
+         (resource-response res {:root "swagger-ui/"}))))))
 
 (defn- route-schemas [{:keys [route-name] :as route}]
   (->> docs
