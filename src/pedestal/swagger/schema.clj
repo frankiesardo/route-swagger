@@ -69,13 +69,16 @@
       (assoc context :request result))))
 
 (defn- ->response-schema [{:keys [headers schema]}]
-  (->> (for [h headers]
-         [(s/required-key h) s/Any])
-       (into {})
-       (loosen)
-       (list :body schema :headers)
-       (apply array-map)
-       (loosen)))
+  (loosen
+   (merge
+    (when schema
+      {:body schema})
+    (when headers
+      (->> (for [h headers]
+             [(s/required-key h) s/Any])
+           (into {})
+           (loosen)
+           (assoc {} :headers))))))
 
 (def ^:private response-default
   {:headers {}
