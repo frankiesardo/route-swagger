@@ -72,14 +72,14 @@
   [_]
   (response (let [pets (vals (:pets @pet-store))]
               {:total (count pets)
-               :pets pets})))
+               :pets (or pets [])})))
 
 (swagger/defhandler add-pet
   {:summary "Add a new pet to the store"
    :parameters {:body Pet}
    :responses {201 {:headers ["Location"]}
                400 {:description "Malformed parameters"}}}
-  [{:keys [errors body-params] :as req}]
+  [{:keys [body-params] :as req}]
   (let [store (swap! pet-store assoc-in [:pets (:id body-params)] body-params)]
       (created (route/url-for ::get-pet-by-id :params {:id (:id body-params)}) "")))
 
@@ -88,9 +88,7 @@
    :parameters {:path {:id s/Int}}
    :responses {404 {:description "ID does not correspond to any pet"}}}
   [{:keys [request response] :as context}]
-  (if-let [pet (and
-                (not (-> request :errors :path-params :id))
-                (get-in @pet-store [:pets (-> request :path-params :id)]))]
+  (if-let [pet (get-in @pet-store [:pets (-> request :path-params :id)])]
     (assoc-in context [:request ::pet] pet)
     (-> context
         terminate
@@ -107,15 +105,15 @@
   {:summary "Update an existing pet"
    :parameters {:body Pet}
    :responses {400 {:description "Malformed parameters"}}}
-  [{:keys [errors path-params json-params] :as req}]
-  (let [store (swap! pet-store assoc-in [:pets (:id path-params)] json-params)]
+  [{:keys [path-params body-params] :as req}]
+  (let [store (swap! pet-store assoc-in [:pets (:id path-params)] body-params)]
     (response "OK")))
 
 (swagger/defhandler update-pet-with-form
   {:summary "Updates a pet in the store with form data"
    :parameters {:form PartialPet}
    :responses {400 {:description "Malformed parameters"}}}
-  [{:keys [errors path-params form-params] :as req}]
+  [{:keys [path-params form-params] :as req}]
   (let [store (swap! pet-store update-in [:pets (:id path-params)] merge form-params)]
     (response "OK")))
 
@@ -125,7 +123,7 @@
   {:summary "Create user"
    :parameters {:body User}
    :responses {201 {:headers ["Location"]}}}
-  [{:keys [errors body-params] :as req}]
+  [{:keys [body-params] :as req}]
   (let [store (swap! pet-store assoc-in [:users (:username body-params)] body-params)]
     (created (route/url-for ::get-user-by-name :params {:username (:username body-params)}) "")))
 
@@ -145,7 +143,7 @@
   {:summary "Create order"
    :parameters {:body NewOrder}
    :responses {201 {:headers ["Location"]}}}
-  [{:keys [errors body-params] :as req}]
+  [{:keys [body-params] :as req}]
   (let [id (rand-int 1000000)
         store (swap! pet-store assoc-in [:orders id] (assoc body-params :id id))]
     (created (route/url-for ::get-order-by-id :params {:id id}) "")))
@@ -155,9 +153,7 @@
    :parameters {:path {:id s/Int}}
    :responses {404 {:description "ID does not correspond to any order"}}}
   [{:keys [request response] :as context}]
-  (if-let [order (and
-                  (not (-> request :errors :path-params :id))
-                  (get-in @pet-store [:orders (-> request :path-params :id)]))]
+  (if-let [order (get-in @pet-store [:orders (-> request :path-params :id)])]
     (assoc-in context [:request ::order] order)
     (-> context
         terminate
