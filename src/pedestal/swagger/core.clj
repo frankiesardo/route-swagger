@@ -148,7 +148,7 @@
           (apply merge (apply dissoc request ks))))))
 
 (interceptor/definterceptorfn body-params
-  ([] (body-params :json-params :edn-params))
+  ([] (body-params :json-params :edn-params :transit-params))
   ([& ks]
      (interceptor/on-request
       ::body-params
