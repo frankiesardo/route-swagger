@@ -5,17 +5,6 @@
             [io.pedestal.interceptor :as interceptor]
             [ring.util.response :refer [response resource-response redirect]]))
 
-(def docs
-  "Holds the generated documentation server by the swagger-object
-   endpoint.  It is possible to inspect this var at any time after
-   compilation to see the generated documentation."
-  {})
-
-(defn- present-swagger-object
-  "Todo memoize?"
-  []
-  docs)
-
 (interceptor/definterceptorfn swagger-object
   "Creates an interceptor that serves the generated documentation on
    the path fo your choice.  Accepts a doc-spec param, which is a map
@@ -24,11 +13,11 @@
    https://github.com/wordnik/swagger-spec/blob/master/versions/2.0.md"
   [doc-spec]
   (with-meta
-    (interceptor/handler
+    (interceptor/before
      ::doc/swagger-object
-     (fn [request]
-       (response (present-swagger-object))))
-    {::doc/swagger-object doc-spec}))
+     (fn [{:keys [route] :as context}]
+       (assoc context :response (response (meta route)))))
+    doc-spec))
 
 (interceptor/definterceptorfn swagger-ui
   "Serves the swagger ui on a path of your choice. Note that the path
@@ -42,15 +31,9 @@
        (case res
          "" (redirect (str path-info "index.html"))
          "conf.js" (response (str "window.API_CONF = {url: \""
-                                  (apply url-for ::doc/swagger-object path-opts) "\"};"))
+                                  (apply url-for ::doc/swagger-object path-opts)
+                                  "\"};"))
          (resource-response res {:root "swagger-ui/"}))))))
-
-(defn- route-schemas [{:keys [route-name] :as route}]
-  (->> docs
-       :paths
-       (mapcat val)
-       (filter #(= (:route-name %) route-name))
-       first))
 
 (interceptor/definterceptorfn coerce-params
   "f is a function that accepts a params schema and a request and
@@ -65,7 +48,7 @@
   ([f]
      (interceptor/before
       (fn [{:keys [request route] :as context}]
-        (if-let [schema (->> route route-schemas :parameters)]
+        (if-let [schema (->> route meta ::doc/doc :parameters)]
           (f schema context)
           context)))))
 
@@ -79,7 +62,7 @@
   ([f]
      (interceptor/after
       (fn [{:keys [response route] :as context}]
-        (if-let [schemas (->> route route-schemas :responses)]
+        (if-let [schemas (->> route meta ::doc/doc :responses)]
           (if-let [schema (or (schemas (:status response)) (schemas :default))]
             (f schema context)
             context)
@@ -91,49 +74,48 @@
   documentation contained in the endpoints."
   [name route-spec]
   `(let [route-table# (expand-routes (quote ~route-spec))]
-     (def ~name route-table#)
-     (alter-var-root #'docs (constantly (doc/generate-docs route-table#)))))
+     (def ~name (doc/inject-docs route-table#))))
 
 ;;;;
 
 (defmacro defhandler
   [name doc args & body]
   `(def ~name (with-meta (interceptor/handler (fn ~args ~@body))
-                {::doc/route ~doc})))
+                {::doc/doc ~doc})))
 
 (defmacro defmiddleware
   [name doc before after]
   (let [f1 (cons 'fn before)
         f2 (cons 'fn after)]
     `(def ~name (with-meta (interceptor/middleware ~f1 ~f2)
-                  {::doc/route ~doc}))))
+                  {::doc/doc ~doc}))))
 
 (defmacro defon-request
   [name doc args & body]
   `(def ~name (with-meta (interceptor/on-request (fn ~args ~@body))
-                {::doc/route ~doc})))
+                {::doc/doc ~doc})))
 
 (defmacro defon-response
   [name doc args & body]
   `(def ~name (with-meta (interceptor/on-response (fn ~args ~@body))
-                {::doc/route ~doc})))
+                {::doc/doc ~doc})))
 
 (defmacro defaround
   [name doc before after]
   (let [f1 (cons 'fn before)
         f2 (cons 'fn after)]
     `(def ~name (with-meta (interceptor/around ~f1 ~f2)
-                  {::doc/route ~doc}))))
+                  {::doc/doc ~doc}))))
 
 (defmacro defbefore
   [name doc args & body]
   `(def ~name (with-meta (interceptor/before (fn ~args ~@body))
-                {::doc/route ~doc})))
+                {::doc/doc ~doc})))
 
 (defmacro defafter
   [name doc args & body]
   `(def ~name (with-meta (interceptor/after (fn ~args ~@body))
-                {::doc/route ~doc})))
+                {::doc/doc ~doc})))
 
 ;;
 
