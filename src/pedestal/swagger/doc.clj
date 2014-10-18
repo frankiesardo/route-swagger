@@ -38,7 +38,7 @@
                             (filter #(= ::swagger-object (:name %)))
                             first
                             meta
-                            (merge {:paths paths}))]
+                            (array-map :paths paths :info))]
     (for [{:keys [route-name] :as route} route-table]
       (if (= route-name ::swagger-object)
         (with-meta route swagger-object)

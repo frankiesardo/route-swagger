@@ -64,8 +64,8 @@
 (def app (make-app {::bootstrap/routes routes}))
 
 (deftest generates-corret-documentation
-  (let [{:keys [paths title]} (doc/swagger-object routes)]
-    (is (= "Test" title))
+  (let [{:keys [paths info]} (doc/swagger-object routes)]
+    (is (= doc-spec info))
     (is (= {"/" #{{:route-name ::get-handler
                    :method :get
                    :parameters {:query {:q s/Str}}
