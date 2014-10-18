@@ -51,7 +51,7 @@
       ::bootstrap/service-fn))
 
 (defroutes routes
-  [["t"
+  [["t" :test
     ["/" ^:interceptors [(pedestal-body-params/body-params)
                          (keywordize-params :headers) (body-params)
                          (coerce-params) (validate-response)]
@@ -59,7 +59,7 @@
      ["/:id" ^:interceptors [id-middleware]
       {:put put-handler
        :delete delete-handler}]
-     ["/docs" {:get [(swagger-object doc-spec)]}]]]])
+     ]]])
 
 (def app (make-app {::bootstrap/routes routes}))
 

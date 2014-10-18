@@ -25,7 +25,7 @@ Annotate your endpoints using `swagger/defhandler`. This macro takes a documenta
    :parameters {:query {:override schema/Bool}
                 :body {:name schema/Str
                        :date schema/Inst}}
-   :responses {:default {:headers ["Location]}
+   :responses {:default {:headers ["Location"]}
                418 {:description "I'm sorry, I'm a teapot"}}}
   [request]
   ...)
@@ -85,9 +85,7 @@ A common pattern is to have an interceptor at the root of a path that loads a re
   [[["/thing/:id" ^:interceptors [load-thing-from-db]
       {:get do-get-thing}
       {:put do-update-thing}
-      {:delete do-delete-thing}]
-    ["/docs" {:get [(swagger/swagger-object doc-spec)]}]
-    ["/ui/*resource" {:get swagger/swagger-ui}]]])
+      {:delete do-delete-thing}]]])
 ```
 All the documentation speficied in the interceptor (such as parameters, reponses, description) will be inherited by the endpoints on the same path. Thus you can reuse both behaviour and the documentation for said behaviour.
 
@@ -99,9 +97,7 @@ And finally we want to be able to use the schemas in the documentation to check 
       ["/thing/:id" ^:interceptors [load-thing-from-db]
         {:get do-get-thing}
         {:put do-update-thing}
-        {:delete do-delete-thing}]
-      ["/docs" {:get [(swagger/swagger-object doc-spec)]}]
-      ["/ui/*resource" {:get swagger/swagger-ui}]]]])
+        {:delete do-delete-thing}]]]])
 ```
 
 For a complete example have a look at the `sample` project.
