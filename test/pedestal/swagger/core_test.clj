@@ -59,6 +59,7 @@
      ["/:id" ^:interceptors [id-middleware]
       {:put put-handler
        :delete delete-handler}]
+     ["/doc" {:get [(swagger-object doc-spec)]}]
      ]]])
 
 (def app (make-app {::bootstrap/routes routes}))
