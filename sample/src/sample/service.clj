@@ -197,8 +197,8 @@
       ["/:id" ^:interceptors [load-order-from-db]
        {:get get-order-by-id}]]
 
-     ["/ui/*resource" {:get [(swagger/swagger-ui)]}]
-     ["/doc" {:get [(swagger/swagger-object swagger-spec)]}]]]])
+     ["/doc" {:get [(swagger/swagger-object swagger-spec)]}]
+     ["/*resource" {:get [(swagger/swagger-ui)]}]]]])
 
 (def service {:env :prod
               ::bootstrap/routes routes
