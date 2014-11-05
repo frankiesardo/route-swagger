@@ -3,7 +3,7 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.6.0"]
-                 [pedestal-swagger "0.1.0"]
+                 [pedestal-swagger "0.1.0-SNAPSHOT"]
                  [metosin/ring-swagger-ui "2.0.17"]
 
                  [io.pedestal/pedestal.service "0.3.0"]
@@ -13,6 +13,7 @@
                  [org.slf4j/jul-to-slf4j "1.7.7"]
                  [org.slf4j/jcl-over-slf4j "1.7.7"]
                  [org.slf4j/log4j-over-slf4j "1.7.7"]]
+  :uberjar-name "sample-standalone.jar"
   :min-lein-version "2.0.0"
   :resource-paths ["config", "resources"]
   :profiles {:dev {:source-paths ["dev"]
