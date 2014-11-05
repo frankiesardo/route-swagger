@@ -172,36 +172,36 @@
    :description "This is a sample Petstore server."
    :apiVersion "2.0"})
 
+(def port (Integer. (or (System/getenv "PORT") 8080)))
 
 (swagger/defroutes routes
-  [[:http "localhost" 8080
-    ["/" ^:interceptors [(body-params/body-params)
+  [[["/" ^:interceptors [(body-params/body-params)
                          bootstrap/json-body
                          (swagger/body-params)
                          (swagger/keywordize-params :form-params :headers)
                          (swagger/coerce-params)
                          (swagger/validate-response)]
-     ["/pet"
+     ["/pets"
       {:get get-all-pets}
       {:post add-pet}
       ["/:id" ^:interceptors [load-pet-from-db]
        {:get get-pet-by-id}
        {:put update-pet}
        {:patch update-pet-with-form}]]
-     ["/user"
+     ["/users"
       {:post add-user}
       ["/:username"
        {:get get-user-by-name}]]
-     ["/order"
+     ["/orders"
       {:post add-order}
       ["/:id" ^:interceptors [load-order-from-db]
        {:get get-order-by-id}]]
 
      ["/ui/*resource" {:get [(swagger/swagger-ui)]}]
-     ["/docs" {:get [(swagger/swagger-object swagger-spec)]}]]]])
+     ["/doc" {:get [(swagger/swagger-object swagger-spec)]}]]]])
 
 (def service {:env :prod
               ::bootstrap/routes routes
               ::bootstrap/resource-path "/public"
               ::bootstrap/type :jetty
-              ::bootstrap/port 8080})
+              ::bootstrap/port port})
