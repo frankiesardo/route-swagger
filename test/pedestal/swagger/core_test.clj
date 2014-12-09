@@ -4,14 +4,18 @@
             [io.pedestal.test :refer :all]
             [schema.core :as s]
             [pedestal.swagger.doc :as doc]
-            [io.pedestal.http.route.definition :refer [expand-routes]]
+            [io.pedestal.http.route.definition :as definition]
             [io.pedestal.http.body-params :as pedestal-body-params]
             [io.pedestal.http :as bootstrap]))
 
+(defon-request auth-middleware
+  {:description "Requires auth as header"
+   :parameters {:header {:auth s/Str}}}
+  [req] req)
+
 (defon-request id-middleware
-  {:description "Requires id and auth"
-   :parameters {:path {:id s/Int}
-                :header {:auth s/Str}}}
+  {:description "Requires id on path"
+   :parameters {:path {:id s/Int}}}
   [req] req)
 
 (defhandler put-handler
@@ -50,26 +54,25 @@
       bootstrap/service-fn
       ::bootstrap/service-fn))
 
-(defroutes routes
+(definition/defroutes routes
   [["t" :test
     ["/" ^:interceptors [(pedestal-body-params/body-params)
                          (keywordize-params :headers) (body-params)
-                         (coerce-params) (validate-response)]
+                         (coerce-params) (validate-response)
+                         auth-middleware]
      {:get get-handler}
      ["/:id" ^:interceptors [id-middleware]
       {:put put-handler
        :delete delete-handler}]
-     ["/doc" {:get [(swagger-object doc-spec)]}]
-     ]]])
-
-(def app (make-app {::bootstrap/routes routes}))
+     ["/doc" {:get [(swagger-object doc-spec)]}]]]])
 
 (deftest generates-corret-documentation
   (let [{:keys [paths info]} (doc/swagger-object routes)]
     (is (= doc-spec info))
     (is (= {"/" #{{:route-name ::get-handler
                    :method :get
-                   :parameters {:query {:q s/Str}}
+                   :parameters {:query {:q s/Str}
+                                :header {:auth s/Str}}
                    :responses {200 {:schema {:status s/Str}}
                                400 {:schema {:error s/Any}}
                                :default {:schema {:result [s/Str]}
@@ -83,7 +86,10 @@
                       :method :delete
                       :parameters {:path {:id s/Int}
                                    :header {:auth s/Str}
-                                   :query {:notify s/Bool}}}}}
+                                   :query {:notify s/Bool}}}}
+            "/doc" #{{:route-name ::doc/swagger-object
+                      :parameters {:header {:auth s/Str}},
+                      :method :get}}}
            (into {} (for [[path operations] paths]
                       [path (set (for [op operations]
                                    (select-keys op [:route-name
@@ -91,6 +97,7 @@
                                                     :parameters
                                                     :responses])))]))))))
 
+(def app (make-app {::bootstrap/routes (doc/inject-docs routes)}))
 
 (deftest coerces-params
   (are [resp req] (= resp (read-string (:body req)))
@@ -122,14 +129,20 @@
   (are [status resp req] (and (= status (:status req))
                               (= resp (read-string (:body req))))
        200 {:status "ok"}
-       (response-for app :get "http://t/?q=ok")
+       (response-for app :get "http://t/?q=ok" :headers {"Auth" "y"})
 
        400 {:error {:query-params {:q "missing-required-key"}}}
-       (response-for app :get "http://t/")
+       (response-for app :get "http://t/" :headers {"Auth" "y"})
 
        201 {:result ["a" "b"]}
-       (response-for app :get "http://t/?q=created")
+       (response-for app :get "http://t/?q=created" :headers {"Auth" "y"})
 
        500 {:error {:headers {"Location" "missing-required-key"}
                     :body {:result "(not (sequential? \"fail\"))"}}}
-       (response-for app :get "http://t/?q=fail")))
+       (response-for app :get "http://t/?q=fail" :headers {"Auth" "y"})))
+
+(deftest swagger-handler
+  (testing "Receives the same coercion and validation treatement"
+    (are [resp req] (= resp (read-string (:body req)))
+         {:error {:headers {:auth "missing-required-key"}}}
+         (response-for app :get "http://t/doc"))))

@@ -16,7 +16,7 @@
     (interceptor/before
      ::doc/swagger-object
      (fn [{:keys [route] :as context}]
-       (assoc context :response (response (meta route)))))
+       (assoc context :response (-> route meta ::doc/swagger-object response))))
     doc-spec))
 
 (interceptor/definterceptorfn swagger-ui

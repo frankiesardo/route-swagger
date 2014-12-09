@@ -17,42 +17,62 @@
        (apply f maps)))
    maps))
 
-(def ^:private deep-merge (partial deep-merge-with (fn [& args] (last args))))
+(def ^:private deep-merge
+  "Deep merge where the last colliding value overrides the others."
+  (partial deep-merge-with (fn [& args] (last args))))
 
-(defn document-route [{:keys [interceptors] :as route}]
-  (if-let [route-docs (seq (keep (comp ::doc meta) interceptors))]
-    (with-meta route
-      {::doc (apply deep-merge
-                      (select-keys route [:path :method :route-name])
-                      route-docs)})
-    route))
+(defn- assoc-meta
+  "Assoc a new key under the object meta rather than replacing the
+  whole map."
+  [obj key val]
+  (with-meta obj (assoc (meta obj) key val)))
 
-(defn generate-swagger [route-table]
-  (let [swagger-doc-route (first
-                           (filter #(= ::swagger-object (:route-name %)) route-table))
-        paths (->> route-table
-                   (keep (comp ::doc meta))
-                   (group-by :path))
-        swagger-object (->> swagger-doc-route
-                            :interceptors
-                            (filter #(= ::swagger-object (:name %)))
-                            first
-                            meta
-                            (array-map :paths paths :info))]
-    (for [{:keys [route-name] :as route} route-table]
-      (if (= route-name ::swagger-object)
-        (with-meta route swagger-object)
-        route))))
+(defn- swagger-route? [route]
+  (when (= ::swagger-object (:route-name route)) route))
 
-(defn inject-docs
-  [route-table]
-  (->> route-table
-       (map document-route)
-       generate-swagger))
+(defn- swagger-interceptor? [interceptor]
+  (when (= ::swagger-object (:name interceptor)) interceptor))
+
+(defn- find-route-docs [{:keys [interceptors] :as route}]
+  (keep (comp ::doc meta) interceptors))
+
+(defn- merge-route-docs [route docs]
+  (apply deep-merge (select-keys route [:path :method :route-name]) docs))
+
+(defn- inject-swagger-into-routes [route-table swagger-object]
+  (for [route route-table]
+    (as-> route route
+          (if (swagger-route? route)
+            (assoc-meta route ::swagger-object swagger-object)
+            route)
+          (if-let [docs (find-route-docs route)]
+            (assoc-meta route ::doc (merge-route-docs route docs))
+            route))))
 
 (defn swagger-object
-  [injected-route-table]
-  (first
-   (for [{:keys [route-name] :as route} injected-route-table
-         :when (= route-name ::swagger-object)]
-     (meta route))))
+  "Generates an edn swagger spec from an expanded route table. This
+  function can also be used to generate a documentation offline or for
+  easy debugging."
+  [route-table]
+  (let [info (->> route-table
+                  (some swagger-route?)
+                  :interceptors
+                  (some swagger-interceptor?)
+                  meta)
+        paths (group-by :path
+                        (for [route route-table
+                              :let [docs (find-route-docs route)]
+                              :when (seq docs)]
+                          (merge-route-docs route docs)))]
+    {:info info
+     :paths paths}))
+
+
+(defn inject-docs
+  "Attaches swagger information as a meta key to each documented
+  route. The context passed to each interceptor has a reference to the
+  selected route, so information like request and response schemas and
+  the swagger object can be retrieved from its meta."
+  [route-table]
+  (let [swagger-object (swagger-object route-table)]
+    (inject-swagger-into-routes route-table swagger-object)))
