@@ -71,7 +71,7 @@ And of course you can add a swagger-ui endpoint to provide easy to access and ea
                             ["/ui/*resource" {:get [(swagger/swagger-ui)]}]]])
 ```
 
-Note that the swagger-ui endpoints requires a `*/resource` splat parameter.
+Note that the swagger-ui endpoints requires a `*resource` splat parameter.
 
 All this would be a little uninteresting if we weren't able to leverage one of pedestal's most interesting features: sharing logic between endpoints via interceptors.
 
