@@ -64,7 +64,7 @@
      ["/:id" ^:interceptors [id-middleware]
       {:put put-handler
        :delete delete-handler}]
-     ["/doc" {:get [(swagger-object doc-spec)]}]]]])
+     ["/doc" {:get [(swagger-doc doc-spec)]}]]]])
 
 (deftest generates-correct-documentation
   (let [{:keys [paths info]} (doc/swagger-object routes)]
@@ -87,7 +87,7 @@
                       :parameters {:path {:id s/Int}
                                    :header {:auth s/Str}
                                    :query {:notify s/Bool}}}}
-            "/doc" #{{:route-name ::doc/swagger-object
+            "/doc" #{{:route-name ::doc/swagger-doc
                       :parameters {:header {:auth s/Str}},
                       :method :get}}}
            (into {} (for [[path operations] paths]

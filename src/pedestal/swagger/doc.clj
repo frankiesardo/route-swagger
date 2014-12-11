@@ -26,26 +26,26 @@
   [obj key val]
   (with-meta obj (assoc (meta obj) key val)))
 
-(defn- swagger-route? [route]
-  (when (= ::swagger-object (:route-name route)) route))
+(defn- swagger-doc-route? [route]
+  (when (= ::swagger-doc (:route-name route)) route))
 
-(defn- swagger-interceptor? [interceptor]
-  (when (= ::swagger-object (:name interceptor)) interceptor))
+(defn- swagger-doc-interceptor? [interceptor]
+  (when (= ::swagger-doc (:name interceptor)) interceptor))
 
-(defn- find-route-docs [{:keys [interceptors] :as route}]
+(defn- find-docs [{:keys [interceptors] :as route}]
   (keep (comp ::doc meta) interceptors))
 
-(defn- merge-route-docs [route docs]
+(defn- merge-docs [route docs]
   (apply deep-merge (select-keys route [:path :method :route-name]) docs))
 
 (defn- inject-swagger-into-routes [route-table swagger-object]
   (for [route route-table]
     (as-> route route
-          (if (swagger-route? route)
+          (if (swagger-doc-route? route)
             (assoc-meta route ::swagger-object swagger-object)
             route)
-          (if-let [docs (find-route-docs route)]
-            (assoc-meta route ::doc (merge-route-docs route docs))
+          (if-let [docs (find-docs route)]
+            (assoc-meta route ::doc (merge-docs route docs))
             route))))
 
 (defn swagger-object
@@ -54,15 +54,15 @@
   easy debugging."
   [route-table]
   (let [info (->> route-table
-                  (some swagger-route?)
+                  (some swagger-doc-route?)
                   :interceptors
-                  (some swagger-interceptor?)
+                  (some swagger-doc-interceptor?)
                   meta)
         paths (group-by :path
                         (for [route route-table
-                              :let [docs (find-route-docs route)]
+                              :let [docs (find-docs route)]
                               :when (seq docs)]
-                          (merge-route-docs route docs)))]
+                          (merge-docs route docs)))]
     {:info info
      :paths paths}))
 

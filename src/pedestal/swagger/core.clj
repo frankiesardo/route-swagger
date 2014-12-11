@@ -5,7 +5,7 @@
             [io.pedestal.interceptor :as interceptor]
             [ring.util.response :refer [response resource-response redirect]]))
 
-(interceptor/definterceptorfn swagger-object
+(interceptor/definterceptorfn swagger-doc
   "Creates an interceptor that serves the generated documentation on
    the path fo your choice.  Accepts a doc-spec param, which is a map
    that specifies global information about the api (such as :title,
@@ -14,9 +14,9 @@
   [doc-spec]
   (with-meta
     (interceptor/before
-     ::doc/swagger-object
+     ::doc/swagger-doc
      (fn [{:keys [route] :as context}]
-       (assoc context :response (-> route meta ::doc/swagger-object response))))
+       (assoc context :response (-> route meta ::doc/swagger-doc response))))
     doc-spec))
 
 (interceptor/definterceptorfn swagger-ui

@@ -38,7 +38,20 @@ You can use these interceptors just like any other interceptors in your route de
 (defroutes routes [[["/my-endpoint" {:get my-endpoint}]]])
 ```
 
-The generated swagger documentation for your endpoints is held in a swagger-object interceptor, so you need to add this interceptor to your route table before being able to inspect it. The `swagger/swagger-object` `interceptor-fn` accepts a map with your global api documentation infos.
+It's possible to generate the swagger documentation on the fly calling:
+
+```clojure
+(pedestal.swagger.doc/swagger-object routes)
+;; => {:paths {"/my-andpoint" [...]}
+```
+
+But what you normally want is to inject the documentation in your route table, so that is available to your interceptors. There's a handy macro for that:
+
+```clojure
+(swagger/defroutes routes [[["/my-endpoint" {:get my-endpoint}]]])
+```
+
+A special endpoint can be added to serve the swagger documentation. You can pass this handler additional global information about your apis that will be merged with the generated one.
 
 ```clojure
 (def doc-spec
@@ -46,30 +59,19 @@ The generated swagger documentation for your endpoints is held in a swagger-obje
    :description "Pedestal + Swagger FTW!"
    ...})
 
-(defroutes routes [[["/my-endpoint" {:get my-endpoint}
-                     "/docs" {:get [(swagger/swagger-object doc-spec)]}]]])
-```
-You can have a quick peek at what your documentation will look like when served under the "/docs" endpoint.
-
-```clojure
-(-> routes
-    pedestal.swagger.doc/inject-docs
-    pedestal.swagger.doc/swagger-object)
-; => {:swagger "2.0"
-      :info {:title "Amazing app"
-             :description "Pedestal + Swagger FTW!"}
-      :paths {"/my-endpoint" [...]}}
+(swagger/defroutes routes [[["/my-endpoint" {:get my-endpoint}]
+                            ["/doc" {:get [(swagger/swagger-doc doc-spec)]}]]])
 ```
 
 And of course you can add a swagger-ui endpoint to provide easy to access and easy to experiment access to your api.
 
 ```clojure
-(defroutes routes [[["/my-endpoint" {:get my-endpoint}
-                     "/my-docs" {:get [(swagger/swagger-object doc-spec)]}
-                     "/ui/*resource" {:get [(swagger/swagger-ui)]}]]])
+(swagger/defroutes routes [[["/my-endpoint" {:get my-endpoint}]
+                            ["/doc" {:get [(swagger/swagger-doc {...})]}]
+                            ["/ui/*resource" {:get [(swagger/swagger-ui)]}]]])
 ```
 
-Note that `swagger-ui` needs to have a route path with splat argument called `*resource` (because we will be serving static resources here).
+Note that the swagger-ui endpoints requires a `*/resource' splat parameter.
 
 All this would be a little uninteresting if we weren't able to leverage one of pedestal's most interesting features: sharing logic between endpoints via interceptors.
 
