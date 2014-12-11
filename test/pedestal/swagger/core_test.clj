@@ -66,7 +66,7 @@
        :delete delete-handler}]
      ["/doc" {:get [(swagger-object doc-spec)]}]]]])
 
-(deftest generates-corret-documentation
+(deftest generates-correct-documentation
   (let [{:keys [paths info]} (doc/swagger-object routes)]
     (is (= doc-spec info))
     (is (= {"/" #{{:route-name ::get-handler
