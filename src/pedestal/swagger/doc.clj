@@ -1,6 +1,5 @@
 (ns pedestal.swagger.doc
-  (:require [ring.swagger.core :as swagger]
-            [io.pedestal.http.route :as route]))
+  (:require [io.pedestal.http.route :as route]))
 
 (defn- deep-merge-with
   "Like merge-with, but merges maps recursively, applying the given fn

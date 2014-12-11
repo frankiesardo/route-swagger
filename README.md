@@ -88,7 +88,7 @@ A common pattern is to have an interceptor at the root of a path that loads a re
       {:put do-update-thing}
       {:delete do-delete-thing}]]])
 ```
-All the documentation speficied in the interceptor (such as parameters, reponses, description) will be inherited by the endpoints on the same path. Thus you can reuse both behaviour and the documentation for said behaviour.
+All the documentation specified in the interceptor (such as parameters, responses, description) will be inherited by the endpoints on the same path. Thus you can reuse both behaviour and the documentation for said behaviour.
 
 And finally we want to be able to use the schemas in the documentation to check the incoming parameters or the outgoing responses. To do so we can include `swagger/coerce-parameters` and `swagger/validate-response` at the top of our route spec. The default behaviour of these interceptors could be overridden passing a custom coercion or validation function.
 
