@@ -42,7 +42,7 @@ It's possible to generate the swagger documentation on the fly calling:
 
 ```clojure
 (pedestal.swagger.doc/swagger-object routes)
-;; => {:paths {"/my-andpoint" [...]}
+;; => {:paths {"/my-endpoint" [...]}
 ```
 
 But what you normally want is to inject the documentation in your route table, so that is available to your interceptors. There's a handy macro for that:
@@ -71,7 +71,7 @@ And of course you can add a swagger-ui endpoint to provide easy to access and ea
                             ["/ui/*resource" {:get [(swagger/swagger-ui)]}]]])
 ```
 
-Note that the swagger-ui endpoints requires a `*/resource' splat parameter.
+Note that the swagger-ui endpoints requires a `*/resource` splat parameter.
 
 All this would be a little uninteresting if we weren't able to leverage one of pedestal's most interesting features: sharing logic between endpoints via interceptors.
 
