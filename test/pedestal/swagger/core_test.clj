@@ -141,8 +141,7 @@
                     :body {:result "(not (sequential? \"fail\"))"}}}
        (response-for app :get "http://t/?q=fail" :headers {"Auth" "y"})))
 
-(deftest swagger-handler
-  (testing "Receives the same coercion and validation treatement"
-    (are [resp req] (= resp (read-string (:body req)))
-         {:error {:headers {:auth "missing-required-key"}}}
-         (response-for app :get "http://t/doc"))))
+(deftest treates-swagger-handler-like-any-other-route
+  (are [resp req] (= resp (read-string (:body req)))
+       {:error {:headers {:auth "missing-required-key"}}}
+       (response-for app :get "http://t/doc")))

@@ -7,8 +7,8 @@
             [io.pedestal.interceptor :as interceptor]
             [io.pedestal.impl.interceptor :refer [terminate]]
             [ring.util.response :refer [response not-found created]]
+            [ring.util.codec :as codec]
             [schema.core :as s]))
-
 
 ;;;; Schemas
 
@@ -165,6 +165,26 @@
   [{:keys [::order] :as req}]
   (response (assoc order :status "Pending" :ship-date (java.util.Date.))))
 
+;
+
+(swagger/defbefore basic-auth
+  {:description "Check basic auth credentials"
+   :security {"basic" []}
+   :responses {403 {:description "Invalid credentials"}}}
+  [{:keys [request response] :as context}]
+  (let [auth (get-in request [:headers :authorization])]
+    (if-not (= auth (str "Basic " (codec/base64-encode (.getBytes "foo:bar"))))
+      (-> context
+          terminate
+          (assoc-in [:response] {:status 403}))
+      context)))
+
+(swagger/defhandler delete-db
+  {:summary "Delete db"}
+  [_]
+  (reset! pet-store {})
+  {:status 204})
+
 ;;;; Routes
 
 (def swagger-spec
@@ -196,6 +216,7 @@
       {:post add-order}
       ["/:id" ^:interceptors [load-order-from-db]
        {:get get-order-by-id}]]
+     ["/secure" ^:interceptors [basic-auth] {:delete delete-db}]
 
      ["/doc" {:get [(swagger/swagger-doc swagger-spec)]}]
      ["/*resource" {:get [(swagger/swagger-ui)]}]]]])

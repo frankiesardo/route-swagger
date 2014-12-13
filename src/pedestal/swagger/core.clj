@@ -16,7 +16,8 @@
     (interceptor/before
      ::doc/swagger-doc
      (fn [{:keys [route] :as context}]
-       (assoc context :response (-> route meta ::doc/swagger-doc response))))
+       ;; TODO schemas to json representable instead of str
+       (assoc context :response (-> route meta ::doc/swagger-doc str response))))
     doc-spec))
 
 (interceptor/definterceptorfn swagger-ui
@@ -33,7 +34,7 @@
        (case res
          "" (redirect (str path-info "index.html"))
          "conf.js" (response (str "window.API_CONF = {url: \""
-                                  (apply url-for ::doc/swagger-object path-opts)
+                                  (apply url-for ::doc/swagger-doc path-opts)
                                   "\"};"))
          (resource-response res {:root "swagger-ui/"}))))))
 

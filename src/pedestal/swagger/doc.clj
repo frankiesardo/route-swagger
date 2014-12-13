@@ -42,7 +42,7 @@
   (for [route route-table]
     (as-> route route
           (if (swagger-doc-route? route)
-            (assoc-meta route ::swagger-object swagger-object)
+            (assoc-meta route ::swagger-doc swagger-object)
             route)
           (if-let [docs (find-docs route)]
             (assoc-meta route ::doc (merge-docs route docs))
