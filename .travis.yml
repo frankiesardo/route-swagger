@@ -12,7 +12,7 @@ after_script:
 - git add .
 - git commit -m 'Documentation'
 - git remote add origin $REPO_URL
-- git push origin gh-pages --force --quiet
+- git push origin master:gh-pages --force --quiet
 env:
   global:
   - GH_REPO="frankiesardo/frankiesardo.github.io"
