@@ -1,6 +1,7 @@
 language: clojure
 lein: lein2
 before_script:
+- echo $GIT_NAME
 - git config --global user.name $GIT_NAME
 - git config --global user.email $GIT_EMAIL
 - export REPO_URL="https://$GH_TOKEN@github.com/$GH_REPO.git"
@@ -14,6 +15,6 @@ after_script:
 env:
   global:
   - GH_REPO="frankiesardo/frankiesardo.github.io"
-  - secure: "HtLh35WAfkh1MUqKvGgh7B1UY50+Dp4iLTKi5wUDILB3919JhsqtocJjxozHJW02w1eiNM54W/9xdy/9yrFL3EceCy6UbP94mvFBhxT62D0q/UyQbVCsH46ekmbuFo5lRfXvjP6AAk25OyYBQfI1Qh63nKCDuVkPYLZpjpZIiDA="
+  - secure: "iQevTLmG78gdOdrmpUctgIe2e6hokMO0RYt2lXd+7Z33OU+QH0u0pMiRwgyMENSCcC39IaPlF3GZjZ6bgjSFOaFkfwC/8I6mGGjkkSXkz7IBnuLmMLaUxHJzJ7HN2juVqwGJY+gx0m06cQ8FK2gxnVu+aToh/2nqo6VM/NHzsO8="
 notifications:
   email: false
