@@ -1,5 +1,19 @@
 language: clojure
 lein: lein2
+before_script:
+- git config --global user.name $GIT_NAME
+- git config --global user.email $GIT_EMAIL
+- export REPO_URL="https://$GH_TOKEN@github.com/$GH_REPO.git"
+- bundle exec rake setup_github_pages[$REPO_URL]
 script: lein2 test
+after_script:
+- lein2 doc
+- git add .
+- git commit -m 'Documentation'
+- git push origin gh-pages --force --quiet
+env:
+  global:
+  - GH_REPO="frankiesardo/frankiesardo.github.io"
+  - secure: "HtLh35WAfkh1MUqKvGgh7B1UY50+Dp4iLTKi5wUDILB3919JhsqtocJjxozHJW02w1eiNM54W/9xdy/9yrFL3EceCy6UbP94mvFBhxT62D0q/UyQbVCsH46ekmbuFo5lRfXvjP6AAk25OyYBQfI1Qh63nKCDuVkPYLZpjpZIiDA="
 notifications:
   email: false
