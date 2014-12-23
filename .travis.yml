@@ -16,7 +16,7 @@ after_script:
 - git push origin gh-pages --force --quiet
 env:
   global:
-  - GH_REPO="frankiesardo/frankiesardo.github.io"
+  - GH_REPO="frankiesardo/pedestal-swagger"
   - secure: "iQevTLmG78gdOdrmpUctgIe2e6hokMO0RYt2lXd+7Z33OU+QH0u0pMiRwgyMENSCcC39IaPlF3GZjZ6bgjSFOaFkfwC/8I6mGGjkkSXkz7IBnuLmMLaUxHJzJ7HN2juVqwGJY+gx0m06cQ8FK2gxnVu+aToh/2nqo6VM/NHzsO8="
 notifications:
   email: false
