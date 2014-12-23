@@ -7,9 +7,9 @@ before_script:
 script: lein2 test
 after_script:
 - lein2 doc
-- git remote set-url $REPO_URL
 - git add .
 - git commit -m 'Documentation'
+- git remote set-url origin $REPO_URL
 - git push origin gh-pages --force --quiet
 env:
   global:
