@@ -7,9 +7,11 @@ before_script:
 script: lein2 test
 after_script:
 - lein2 doc
+- cd doc
+- git init
 - git add .
 - git commit -m 'Documentation'
-- git remote set-url origin $REPO_URL
+- git remote add origin $REPO_URL
 - git push origin gh-pages --force --quiet
 env:
   global:
