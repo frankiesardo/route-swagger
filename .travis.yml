@@ -1,11 +1,9 @@
 language: clojure
 lein: lein2
 before_script:
-- echo $GIT_NAME
 - git config --global user.name $GIT_NAME
 - git config --global user.email $GIT_EMAIL
 - export REPO_URL="https://$GH_TOKEN@github.com/$GH_REPO.git"
-- bundle exec rake setup_github_pages[$REPO_URL]
 script: lein2 test
 after_script:
 - lein2 doc
@@ -18,3 +16,4 @@ env:
   - secure: "iQevTLmG78gdOdrmpUctgIe2e6hokMO0RYt2lXd+7Z33OU+QH0u0pMiRwgyMENSCcC39IaPlF3GZjZ6bgjSFOaFkfwC/8I6mGGjkkSXkz7IBnuLmMLaUxHJzJ7HN2juVqwGJY+gx0m06cQ8FK2gxnVu+aToh/2nqo6VM/NHzsO8="
 notifications:
   email: false
+sudo: false
