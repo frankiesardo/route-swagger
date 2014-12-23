@@ -187,14 +187,12 @@
 
 ;;;; Routes
 
-(def swagger-spec
-  {:title "Swagger Sample App"
-   :description "This is a sample Petstore server."
-   :apiVersion "2.0"})
-
 (def port (Integer. (or (System/getenv "PORT") 8080)))
 
 (swagger/defroutes routes
+  {:title "Swagger Sample App"
+   :description "This is a sample Petstore server."
+   :apiVersion "2.0"}
   [[["/" ^:interceptors [(body-params/body-params)
                          bootstrap/json-body
                          (swagger/body-params)
@@ -218,7 +216,7 @@
        {:get get-order-by-id}]]
      ["/secure" ^:interceptors [basic-auth] {:delete delete-db}]
 
-     ["/doc" {:get [(swagger/swagger-doc swagger-spec)]}]
+     ["/doc" {:get [(swagger/swagger-doc)]}]
      ["/*resource" {:get [(swagger/swagger-ui)]}]]]])
 
 (def service {:env :prod

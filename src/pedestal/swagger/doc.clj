@@ -20,17 +20,8 @@
   "Deep merge where the last colliding value overrides the others."
   (partial deep-merge-with (fn [& args] (last args))))
 
-(defn- assoc-meta
-  "Assoc a new key under the object meta rather than replacing the
-  whole map."
-  [obj key val]
-  (with-meta obj (assoc (meta obj) key val)))
-
 (defn- swagger-doc-route? [route]
   (when (= ::swagger-doc (:route-name route)) route))
-
-(defn- swagger-doc-interceptor? [interceptor]
-  (when (= ::swagger-doc (:name interceptor)) interceptor))
 
 (defn- find-docs [{:keys [interceptors] :as route}]
   (keep (comp ::doc meta) interceptors))
@@ -42,29 +33,25 @@
   (for [route route-table]
     (as-> route route
           (if (swagger-doc-route? route)
-            (assoc-meta route ::swagger-doc swagger-object)
+            (vary-meta route assoc ::swagger-doc swagger-object)
             route)
-          (if-let [docs (find-docs route)]
-            (assoc-meta route ::doc (merge-docs route docs))
+          (if-let [docs (seq (find-docs route))]
+            (vary-meta route assoc ::doc (merge-docs route docs))
             route))))
 
-(defn swagger-object
-  "Generates an edn swagger spec from an expanded route table. This
+(defn- documented-handler? [route]
+  (-> route :interceptors last meta ::doc))
+
+(defn generate-paths
+  "Generates swagger paths from an expanded route table. This
   function can also be used to generate a documentation offline or for
   easy debugging."
   [route-table]
-  (let [info (->> route-table
-                  (some swagger-doc-route?)
-                  :interceptors
-                  (some swagger-doc-interceptor?)
-                  meta)
-        paths (group-by :path
-                        (for [route route-table
-                              :let [docs (find-docs route)]
-                              :when (seq docs)]
-                          (merge-docs route docs)))]
-    {:info info
-     :paths paths}))
+  (group-by :path
+            (for [route route-table
+                  :let [docs (find-docs route)]
+                  :when (documented-handler? route)]
+              (merge-docs route docs))))
 
 
 (defn inject-docs
@@ -72,6 +59,7 @@
   route. The context passed to each interceptor has a reference to the
   selected route, so information like request and response schemas and
   the swagger object can be retrieved from its meta."
-  [route-table]
-  (let [swagger-object (swagger-object route-table)]
+  [doc route-table]
+  (let [swagger-object {:info doc
+                        :paths (generate-paths route-table)}]
     (inject-swagger-into-routes route-table swagger-object)))

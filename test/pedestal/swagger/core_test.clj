@@ -32,6 +32,9 @@
   {:status 200 :headers {}
    :body {:params (merge query-params path-params (select-keys headers [:auth]))}})
 
+(defn non-documented-handler
+  [req] {:satus 200})
+
 (defhandler get-handler
   {:summary "Get all resources"
    :parameters {:query {:q s/Str}}
@@ -63,41 +66,39 @@
      {:get get-handler}
      ["/:id" ^:interceptors [id-middleware]
       {:put put-handler
-       :delete delete-handler}]
-     ["/doc" {:get [(swagger-doc doc-spec)]}]]]])
+       :delete delete-handler
+       :head non-documented-handler}]
+     ["/doc" {:get [(swagger-doc)]}]]]])
 
 (deftest generates-correct-documentation
-  (let [{:keys [paths info]} (doc/swagger-object routes)]
-    (is (= doc-spec info))
-    (is (= {"/" #{{:route-name ::get-handler
-                   :method :get
-                   :parameters {:query {:q s/Str}
-                                :header {:auth s/Str}}
-                   :responses {200 {:schema {:status s/Str}}
-                               400 {:schema {:error s/Any}}
-                               :default {:schema {:result [s/Str]}
-                                         :headers ["Location"]}}}}
-            "/:id" #{{:route-name ::put-handler
-                      :method :put
-                      :parameters {:path {:id s/Int}
-                                   :header {:auth s/Str}
-                                   :body {:name s/Keyword}}}
-                     {:route-name ::delete-handler
-                      :method :delete
-                      :parameters {:path {:id s/Int}
-                                   :header {:auth s/Str}
-                                   :query {:notify s/Bool}}}}
-            "/doc" #{{:route-name ::doc/swagger-doc
-                      :parameters {:header {:auth s/Str}},
-                      :method :get}}}
-           (into {} (for [[path operations] paths]
-                      [path (set (for [op operations]
-                                   (select-keys op [:route-name
-                                                    :method
-                                                    :parameters
-                                                    :responses])))]))))))
+  (let [expected {"/" #{{:route-name ::get-handler
+                         :method :get
+                         :parameters {:query {:q s/Str}
+                                      :header {:auth s/Str}}
+                         :responses {200 {:schema {:status s/Str}}
+                                     400 {:schema {:error s/Any}}
+                                     :default {:schema {:result [s/Str]}
+                                               :headers ["Location"]}}}}
+                  "/:id" #{{:route-name ::put-handler
+                            :method :put
+                            :parameters {:path {:id s/Int}
+                                         :header {:auth s/Str}
+                                         :body {:name s/Keyword}}}
+                           {:route-name ::delete-handler
+                            :method :delete
+                            :parameters {:path {:id s/Int}
+                                         :header {:auth s/Str}
+                                         :query {:notify s/Bool}}}}}
+        actual (into {}
+                     (for [[path operations] (doc/generate-paths routes)]
+                       [path (set (for [op operations]
+                                    (select-keys op [:route-name
+                                                     :method
+                                                     :parameters
+                                                     :responses])))]))]
+    (is (= expected actual))))
 
-(def app (make-app {::bootstrap/routes (doc/inject-docs routes)}))
+(def app (make-app {::bootstrap/routes (doc/inject-docs doc-spec routes)}))
 
 (deftest coerces-params
   (are [resp req] (= resp (read-string (:body req)))
@@ -141,7 +142,7 @@
                     :body {:result "(not (sequential? \"fail\"))"}}}
        (response-for app :get "http://t/?q=fail" :headers {"Auth" "y"})))
 
-(deftest treates-swagger-handler-like-any-other-route
+(deftest checks-swagger-handler-like-any-other-route
   (are [resp req] (= resp (read-string (:body req)))
        {:error {:headers {:auth "missing-required-key"}}}
        (response-for app :get "http://t/doc")))

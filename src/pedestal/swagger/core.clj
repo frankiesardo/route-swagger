@@ -7,18 +7,15 @@
 
 (interceptor/definterceptorfn swagger-doc
   "Creates an interceptor that serves the generated documentation on
-   the path fo your choice.  Accepts a doc-spec param, which is a map
-   that specifies global information about the api (such as :title,
-   :description :version etc.) For a complete list visit:
-   \"https://github.com/wordnik/swagger-spec/blob/master/versions/2.0.md#infoObject\"."
-  [doc-spec]
-  (with-meta
-    (interceptor/before
-     ::doc/swagger-doc
-     (fn [{:keys [route] :as context}]
-       ;; TODO schemas to json representable instead of str
-       (assoc context :response (-> route meta ::doc/swagger-doc str response))))
-    doc-spec))
+   the path fo your choice.  Accepts an optional function f that takes
+   the context and the swagger-object and returns a ring response."
+  ;; TODO schemas to json representable instead of str
+  ([] (swagger-doc (fn [context swagger-object] (response (str swagger-object)))))
+  ([f]
+     (interceptor/before
+      ::doc/swagger-doc
+      (fn [{:keys [route] :as context}]
+        (assoc context :response (f context (-> route meta ::doc/swagger-doc)))))))
 
 (interceptor/definterceptorfn swagger-ui
   "Creates an interceptor that serves the swagger ui on a path of your
@@ -72,15 +69,40 @@
             context)
           context)))))
 
-(defmacro defroutes
-  "A drop-in replacement for pedestal's defroutes.  In addition to
-  defining a var that holds the expanded routes, compiles the swagger
-  documentation and injects it into the routes as a meta tag."
-  [name route-spec]
-  `(let [route-table# (expand-routes (quote ~route-spec))]
-     (def ~name (doc/inject-docs route-table#))))
+;; Very useful interceptors
 
-;;;;
+(interceptor/definterceptorfn body-params
+  "Creates an interceptor that will merge the supplied request submaps
+  in a single :body-params submaps. This is usually declared after
+  'io.pedestal.http.body-params/body-params', so while the first will
+  parse the body and assoc it in different submaps (:json-params,
+  :edn-params etc.) this interceptor will make sure that the body
+  params will always be found under :body-params. By default it will
+  merge the request submaps under :json-params, :edn-params and
+  :transit-params."
+  ([] (body-params :json-params :edn-params :transit-params))
+  ([& ks]
+     (interceptor/on-request
+      ::body-params
+      (fn [request]
+        (->> (map (partial get request) ks)
+             (apply merge)
+             (assoc request :body-params))))))
+
+(interceptor/definterceptorfn keywordize-params
+  "Creates an interceptor that keywordize the parameters map under the
+  specified keys e.g. if you supply :form-params it will keywordize
+  the keys in the request submap under :form-params."
+  [& ks]
+  (interceptor/on-request
+   ::keywordize-params
+   (fn [request]
+     (->> (map (partial get request) ks)
+          (map #(zipmap (map keyword (keys %)) (vals %)))
+          (zipmap ks)
+          (apply merge (apply dissoc request ks))))))
+
+;;;; Pedestal aliases
 
 (defmacro defhandler
   "A drop-in replacement for pedestal's equivalent interceptor. Makes
@@ -144,33 +166,10 @@
 
 ;;
 
-(interceptor/definterceptorfn body-params
-  "Creates an interceptor that will merge the supplied request submaps
-  in a single :body-params submaps. This is usually declared after
-  'io.pedestal.http.body-params/body-params', so while the first will
-  parse the body and assoc it in different submaps (:json-params,
-  :edn-params etc.) this interceptor will make sure that the body
-  params will always be found under :body-params. By default it will
-  merge the request submaps under :json-params, :edn-params and
-  :transit-params."
-  ([] (body-params :json-params :edn-params :transit-params))
-  ([& ks]
-     (interceptor/on-request
-      ::body-params
-      (fn [request]
-        (->> (map (partial get request) ks)
-             (apply merge)
-             (assoc request :body-params))))))
-
-(interceptor/definterceptorfn keywordize-params
-  "Creates an interceptor that keywordize the parameters map under the
-  specified keys e.g. if you supply :form-params it will keywordize
-  the keys in the request submap under :form-params."
-  [& ks]
-  (interceptor/on-request
-   ::keywordize-params
-   (fn [request]
-     (->> (map (partial get request) ks)
-          (map #(zipmap (map keyword (keys %)) (vals %)))
-          (zipmap ks)
-          (apply merge (apply dissoc request ks))))))
+(defmacro defroutes
+  "A drop-in replacement for pedestal's defroutes.  In addition to
+  defining a var that holds the expanded routes, compiles the swagger
+  documentation and injects it into the routes as a meta tag."
+  [name doc route-spec]
+  `(let [route-table# (expand-routes (quote ~route-spec))]
+     (def ~name (doc/inject-docs ~doc route-table#))))
