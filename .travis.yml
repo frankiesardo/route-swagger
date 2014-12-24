@@ -20,7 +20,7 @@ env:
   global:
   - GH_REPO="frankiesardo/pedestal-swagger"
   - secure: "iQevTLmG78gdOdrmpUctgIe2e6hokMO0RYt2lXd+7Z33OU+QH0u0pMiRwgyMENSCcC39IaPlF3GZjZ6bgjSFOaFkfwC/8I6mGGjkkSXkz7IBnuLmMLaUxHJzJ7HN2juVqwGJY+gx0m06cQ8FK2gxnVu+aToh/2nqo6VM/NHzsO8="
-  - secure: "QX9hSVwAaz9WmJYNvL5j1Uepi2KnWQKQJxdfRdt3EZaNgg3NH/4thSERPp9vEFPCMpb1Dg0/AG1lp4awxc9ZKhP15fjMGYea06TwdyBbZUazGj6F94sTKirS9VRtq4ZL+Uxc+IRzMNS5ulAvfAWnf1Khr/TdHi7a0rBCOCYVWVo="
+  - secure: "qQP7zYIJDj/EsM9dnHd+sAyk1n+wbzYzhyfo5x4xg5HKO7kuOs2OunxD77m91KybnRlmEWjCAjfpjv3FKfsCu1hbmI+JlGGGhfCMUBlnv9rrpfvsfVzhRmUi5DIgbswEllEWrS9ySIKO4ornsCQRXLwSPESXPPDlSORta+/77OU="
 notifications:
   email: false
 sudo: false
