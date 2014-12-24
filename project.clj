@@ -10,4 +10,7 @@
                  [metosin/ring-swagger "0.12.0"]
                  [metosin/ring-swagger-ui "2.0.17"]]
   :codox {:src-dir-uri "http://github.com/frankiesardo/pedestal-swagger/blob/master/"}
+  :repositories {"clojars" {:url "https://clojars.org/repo"
+                             :username [:gpg :env/username]
+                             :passphrase [:gpg :env/password]}}
   :profiles {:dev {:dependencies [[io.pedestal/pedestal.jetty "0.1.5"]]}})
