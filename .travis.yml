@@ -10,7 +10,7 @@ after_script:
 - cd doc
 - git init
 - git add .
-- git commit -m 'Documentation'
+- git commit -m 'Doc [ci skip]'
 - git remote add origin $REPO_URL
 - git checkout -b gh-pages
 - git push origin gh-pages --force --quiet
