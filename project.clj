@@ -1,4 +1,4 @@
-(defproject frankiesardo/pedestal-swagger "0.1.0-SNAPSHOT"
+(defproject frankiesardo/pedestal-swagger "0.1.0"
   :description "Swagger documentation for Pedestal routes"
   :url "http://github.com/frankiesardo/pedestal-swagger"
   :license {:name "Eclipse Public License"
@@ -12,5 +12,8 @@
   :codox {:src-dir-uri "http://github.com/frankiesardo/pedestal-swagger/blob/master/"}
   :repositories {"snapshots" {:url "https://clojars.org/repo"
                               :username [:gpg :env/clojars_username]
-                              :passphrase [:gpg :env/clojars_password]}}
+                              :passphrase [:gpg :env/clojars_password]}
+                 "releases" {:url "https://clojars.org/repo"
+                             :username [:gpg :env/clojars_username]
+                             :passphrase [:gpg :env/clojars_password]}}
   :profiles {:dev {:dependencies [[io.pedestal/pedestal.jetty "0.1.5"]]}})
