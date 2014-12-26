@@ -13,6 +13,9 @@ after_success:
 - git add .
 - git commit -m 'Doc [ci skip]'
 - git push origin gh-pages --quiet
+deploy:
+  provider: heroku
+  api_key: $HEROKU_TOKEN
 env:
   global:
   - GH_REPO="frankiesardo/pedestal-swagger"

@@ -1,0 +1,1 @@
+ web: cd sample; lein uberjar; java $JVM_OPTS -cp target/sample-standalone.jar clojure.main -m sample.server
