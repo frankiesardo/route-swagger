@@ -7,7 +7,7 @@ before_script:
 - export REPO_URL="https://$GH_TOKEN@github.com/$GH_REPO.git"
 script: lein2 test
 after_success:
-- lein2 deploy clojars
+- lein2 deploy
 - lein2 doc
 - cd doc
 - git init
