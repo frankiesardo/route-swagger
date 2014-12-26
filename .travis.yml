@@ -1,8 +1,6 @@
 language: clojure
 lein: lein2
 before_script:
-- echo $CLOJARS_USERNAME
-- echo $CLOJARS_PASSWORD
 - git config --global user.name $GIT_NAME
 - git config --global user.email $GIT_EMAIL
 - export REPO_URL="https://$GH_TOKEN@github.com/$GH_REPO.git"
@@ -19,7 +17,7 @@ env:
   global:
   - GH_REPO="frankiesardo/pedestal-swagger"
   - secure: "iQevTLmG78gdOdrmpUctgIe2e6hokMO0RYt2lXd+7Z33OU+QH0u0pMiRwgyMENSCcC39IaPlF3GZjZ6bgjSFOaFkfwC/8I6mGGjkkSXkz7IBnuLmMLaUxHJzJ7HN2juVqwGJY+gx0m06cQ8FK2gxnVu+aToh/2nqo6VM/NHzsO8="
-  - secure: "JHVJozT0opeRdMEoz5QP9T954t+bqYgAZw7C4mmjxzuWtmExsGxVR/twP/dyCgm33i/Fbv/hzI5fvkupBY/ccu8SkOjWt5CktkfnOdz61DlWBTDOs096cjjjanjg7wBhBrbjLwDjKoIKNpB6iMvH1vjanr7rk2ebmil1SXKdBa8="
+  - secure: "qQP7zYIJDj/EsM9dnHd+sAyk1n+wbzYzhyfo5x4xg5HKO7kuOs2OunxD77m91KybnRlmEWjCAjfpjv3FKfsCu1hbmI+JlGGGhfCMUBlnv9rrpfvsfVzhRmUi5DIgbswEllEWrS9ySIKO4ornsCQRXLwSPESXPPDlSORta+/77OU="
 notifications:
   email: false
 sudo: false
