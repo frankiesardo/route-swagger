@@ -61,7 +61,10 @@
   (coerce (->request-schema schema)
           (merge request-default request)))
 
-(defn ?bad-request [schema {:keys [request] :as context}]
+(defn ?bad-request
+  "Terminates the interceptors chain and returns a 400 response if the
+  request doesn't match the schema supplied."
+  [schema {:keys [request] :as context}]
   (let [result (coerce-params schema request)]
     (if (u/error? result)
       (assoc (terminate context)
@@ -91,7 +94,10 @@
   (validate (->response-schema schema)
             (merge response-default response)))
 
-(defn ?internal-server-error [schema {:keys [response] :as context}]
+(defn ?internal-server-error
+  "Changes the response to a 500 if the response doesn't match the
+  schema supplied."
+  [schema {:keys [response] :as context}]
   (let [result (validate-response schema response)]
     (if (u/error? result)
       (assoc context :response {:status 500 :headers {} :body (explain result)})
