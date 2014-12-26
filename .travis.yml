@@ -7,15 +7,12 @@ before_script:
 - export REPO_URL="https://$GH_TOKEN@github.com/$GH_REPO.git"
 script: lein2 test
 after_success:
-- lein2 deploy
+- git clone -b gh-pages REPO_URL doc
 - lein2 doc
 - cd doc
-- git init
 - git add .
 - git commit -m 'Doc [ci skip]'
-- git remote add origin $REPO_URL
-- git checkout -b gh-pages
-- git push origin gh-pages --force --quiet
+- git push origin gh-pages --quiet
 env:
   global:
   - GH_REPO="frankiesardo/pedestal-swagger"
