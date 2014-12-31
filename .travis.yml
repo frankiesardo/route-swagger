@@ -6,7 +6,6 @@ before_script:
 - export REPO_URL="https://$GH_TOKEN@github.com/$GH_REPO.git"
 script: lein2 test
 after_success:
-- lein2 deploy
 - git clone -b gh-pages $REPO_URL doc
 - lein2 doc
 - cd doc
