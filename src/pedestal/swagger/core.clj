@@ -3,14 +3,15 @@
             [pedestal.swagger.schema :as schema]
             [io.pedestal.http.route.definition :refer [expand-routes]]
             [io.pedestal.interceptor :as interceptor]
-            [ring.util.response :refer [response resource-response redirect]]))
+            [ring.util.response :refer [response resource-response redirect]]
+            [ring.swagger.swagger2 :as spec]))
 
 (interceptor/definterceptorfn swagger-doc
   "Creates an interceptor that serves the generated documentation on
    the path fo your choice.  Accepts an optional function f that takes
    the context and the swagger-object and returns a ring response."
-  ;; TODO schemas to json representable instead of str
-  ([] (swagger-doc (fn [context swagger-object] (response (str swagger-object)))))
+  ([] (swagger-doc (fn [context swagger-object]
+                     (response (spec/swagger-json swagger-object)))))
   ([f]
      (interceptor/before
       ::doc/swagger-doc
@@ -170,6 +171,8 @@
   "A drop-in replacement for pedestal's defroutes.  In addition to
   defining a var that holds the expanded routes, compiles the swagger
   documentation and injects it into the routes as a meta tag."
-  [name doc route-spec]
-  `(let [route-table# (expand-routes (quote ~route-spec))]
-     (def ~name (doc/inject-docs ~doc route-table#))))
+  ([name route-spec]
+   `(defroutes ~name {:title "Swagger API" :version "0.0.1"} ~route-spec))
+  ([name doc route-spec]
+   `(let [route-table# (expand-routes (quote ~route-spec))]
+      (def ~name (doc/inject-docs ~doc route-table#)))))

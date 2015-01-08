@@ -46,20 +46,17 @@
        (into {})
        (loosen)))
 
-(def ^:private request-default
-  "So that we don't get too general errors like 'path-params: missing-required-key'"
-  {:body-params nil
-   :form-params {}
-   :path-params {}
-   :query-params {}
-   :headers {}})
+(defn- with-request-defaults [r]
+  (merge
+   {:body-params  nil
+    :form-params  {}
+    :path-params  {}
+    :query-params {}
+    :headers      {}} r))
 
-(defn- coerce [schema value]
-  ((c/coercer schema c/+string-coercions+) value))
-
-(defn coerce-params [schema request]
-  (coerce (->request-schema schema)
-          (merge request-default request)))
+(defn coerce-params [schema value]
+  ((c/coercer (->request-schema schema) c/+string-coercions+)
+   (with-request-defaults value)))
 
 (defn ?bad-request
   "Terminates the interceptors chain and returns a 400 response if the
@@ -67,9 +64,13 @@
   [schema {:keys [request] :as context}]
   (let [result (coerce-params schema request)]
     (if (u/error? result)
-      (assoc (terminate context)
-        :response {:status 400 :headers {} :body (explain result)})
+      (assoc (terminate context) :response
+             {:status 400 :headers {} :body (explain result)})
       (assoc context :request result))))
+
+(defn- require-keys [m]
+  (let [f (fn [[k v]] [(s/required-key k) v])]
+    (into {} (map f m))))
 
 (defn- ->response-schema [{:keys [headers schema]}]
   (loosen
@@ -77,22 +78,17 @@
     (when schema
       {:body schema})
     (when headers
-      (->> (for [h headers]
-             [(s/required-key h) s/Any])
-           (into {})
-           (loosen)
-           (assoc {} :headers))))))
+      {:headers  (loosen (require-keys headers))}))))
 
-(def ^:private response-default
-  {:headers {}
-   :body nil})
+(defn- with-response-defaults [r]
+  (merge
+   {:headers {}
+    :body nil}
+   r))
 
-(defn- validate [schema value]
-  ((c/coercer schema {}) value))
-
-(defn validate-response [schema response]
-  (validate (->response-schema schema)
-            (merge response-default response)))
+(defn validate-response [schema value]
+  ((c/coercer (->response-schema schema) {})
+   (with-response-defaults value)))
 
 (defn ?internal-server-error
   "Changes the response to a 500 if the response doesn't match the
@@ -100,5 +96,6 @@
   [schema {:keys [response] :as context}]
   (let [result (validate-response schema response)]
     (if (u/error? result)
-      (assoc context :response {:status 500 :headers {} :body (explain result)})
+      (assoc context :response
+             {:status 500 :headers {} :body (explain result)})
       context)))

@@ -23,14 +23,16 @@
    :parameters {:body {:name s/Keyword}}}
   [{:keys [body-params path-params headers]}]
   {:status 200 :headers {}
-   :body {:params (merge body-params path-params (select-keys headers [:auth]))}})
+   :body {:params (merge body-params path-params
+                         (select-keys headers [:auth]))}})
 
 (defhandler delete-handler
   {:summary "Delete resource with id"
    :parameters {:query {:notify s/Bool}}}
   [{:keys [query-params path-params headers]}]
   {:status 200 :headers {}
-   :body {:params (merge query-params path-params (select-keys headers [:auth]))}})
+   :body {:params (merge query-params path-params
+                         (select-keys headers [:auth]))}})
 
 (defn non-documented-handler
   [req] {:satus 200})
@@ -41,15 +43,16 @@
    :responses {200 {:schema {:status s/Str}}
                400 {:schema {:error s/Any}}
                :default {:schema {:result [s/Str]}
-                         :headers ["Location"]}}}
+                         :headers {"Location" s/Str}}}}
   [{:keys [query-params]}]
   (case (:q query-params)
     "ok" {:status 200 :body {:status "ok"} :headers {}}
     "created" {:status 201 :body {:result ["a" "b"]} :headers {"Location" "Here!"}}
     "fail" {:status 299 :body {:result "fail"} :headers {}}))
 
-(def doc-spec
-  {:title "Test"})
+(def info
+  {:title "Test"
+   :version "0.1"})
 
 (defn make-app [options]
   (-> options
@@ -71,34 +74,32 @@
      ["/doc" {:get [(swagger-doc)]}]]]])
 
 (deftest generates-correct-documentation
-  (let [expected {"/" #{{:route-name ::get-handler
-                         :method :get
-                         :parameters {:query {:q s/Str}
-                                      :header {:auth s/Str}}
-                         :responses {200 {:schema {:status s/Str}}
-                                     400 {:schema {:error s/Any}}
-                                     :default {:schema {:result [s/Str]}
-                                               :headers ["Location"]}}}}
-                  "/:id" #{{:route-name ::put-handler
-                            :method :put
-                            :parameters {:path {:id s/Int}
-                                         :header {:auth s/Str}
-                                         :body {:name s/Keyword}}}
-                           {:route-name ::delete-handler
-                            :method :delete
-                            :parameters {:path {:id s/Int}
-                                         :header {:auth s/Str}
-                                         :query {:notify s/Bool}}}}}
-        actual (into {}
-                     (for [[path operations] (doc/generate-paths routes)]
-                       [path (set (for [op operations]
-                                    (select-keys op [:route-name
-                                                     :method
-                                                     :parameters
-                                                     :responses])))]))]
-    (is (= expected actual))))
+  (let [expected {:swagger "2.0"
+                  :info info
+                  :paths
+                  {"/"
+                   {:get {:description "Requires auth as header"
+                          :summary "Get all resources"
+                          :parameters {:query {:q s/Str}
+                                       :header {:auth s/Str}}
+                          :responses {200 {:schema {:status s/Str}}
+                                      400 {:schema {:error s/Any}}
+                                      :default {:schema {:result [s/Str]}
+                                                :headers {"Location" s/Str}}}}}
+                   "/:id"
+                   {:put {:description "Requires id on path"
+                          :summary "Put resource with id"
+                          :parameters {:path {:id s/Int}
+                                       :header {:auth s/Str}
+                                       :body {:name s/Keyword}}}
+                    :delete {:description "Requires id on path"
+                             :summary "Delete resource with id"
+                             :parameters {:path {:id s/Int}
+                                          :header {:auth s/Str}
+                                          :query {:notify s/Bool}}}}}}]
+    (is (= expected (doc/generate-docs info routes)))))
 
-(def app (make-app {::bootstrap/routes (doc/inject-docs doc-spec routes)}))
+(def app (make-app {::bootstrap/routes (doc/inject-docs info routes)}))
 
 (deftest coerces-params
   (are [resp req] (= resp (read-string (:body req)))

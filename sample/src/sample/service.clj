@@ -192,7 +192,7 @@
 (swagger/defroutes routes
   {:title "Swagger Sample App"
    :description "This is a sample Petstore server."
-   :apiVersion "2.0"}
+   :version "2.0"}
   [[["/" ^:interceptors [(body-params/body-params)
                          bootstrap/json-body
                          (swagger/body-params)

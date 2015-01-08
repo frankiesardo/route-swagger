@@ -1,4 +1,4 @@
-(defproject frankiesardo/pedestal-swagger "0.1.0-SNAPSHOT"
+(defproject frankiesardo/pedestal-swagger "0.1.1-SNAPSHOT"
   :description "Swagger documentation for Pedestal routes"
   :url "http://github.com/frankiesardo/pedestal-swagger"
   :license {:name "Eclipse Public License"
@@ -7,8 +7,8 @@
   :codox {:src-dir-uri "http://github.com/frankiesardo/pedestal-swagger/blob/master/"}
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [io.pedestal/pedestal.service "0.3.0"]
-                 [metosin/ring-swagger "0.12.0"]
-                 [metosin/ring-swagger-ui "2.0.17"]]
+                 [metosin/ring-swagger "0.16.0-SNAPSHOT"]
+                 [metosin/ring-swagger-ui "2.1.0-alpha.6-SNAPSHOT"]]
   :min-lein-version "2.0.0"
   :deploy-repositories [["releases"  :clojars]
                         ["snapshots" :clojars]]
