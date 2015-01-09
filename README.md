@@ -23,9 +23,9 @@ Annotate your endpoints using `swagger/defhandler`. This macro takes a documenta
 (swagger/defhandler my-endpoint
   {:summary "Enpoint for stuff"
    :description "This is an interesting endpoint"
-   :parameters {:query {:override schema/Bool}
-                :body {:name schema/Str
-                       :date schema/Inst}}
+   :parameters {:query {:param1 schema/Bool}
+                :body {:param2 schema/Str
+                       :param3 schema/Inst}}
    :responses {:default {:headers ["Location"]}
                418 {:description "I'm sorry, I'm a teapot"}}}
   [request]
@@ -41,8 +41,10 @@ You can use these interceptors just like any other interceptors in your route de
 It's possible to generate the swagger paths documentation on the fly calling:
 
 ```clj
-(pedestal.swagger.doc/generate-paths routes)
-;; => {:paths {"/my-endpoint" [...]}
+(pedestal.swagger.doc/generate-docs {:title "My App} routes)
+;; => {:swagger "2.0"
+;;     :title "My App"
+;;     :paths {"/my-endpoint" {:get {...}}}}
 ```
 
 But what you normally want is to inject the documentation in your route table, so that is available to your interceptors. There's a handy macro for that:
@@ -57,8 +59,6 @@ The second argument to defroutes is a map containing general informations about 
 
 ```clj
 (swagger/defroutes routes
-  {:title "My App"
-   :version "0.1.0"}
   [[["/my-endpoint" {:get my-endpoint}]
     ["/doc" {:get [(swagger/swagger-doc)]}]]])
 ```
@@ -67,7 +67,6 @@ And of course you can add a swagger-ui endpoint to provide easy to access and ea
 
 ```clj
 (swagger/defroutes routes
-  {...}
   [[["/my-endpoint" {:get my-endpoint}]
   ["/doc" {:get [(swagger/swagger-doc)]}]
   ["/ui/*resource" {:get [(swagger/swagger-ui)]}]]])
@@ -87,7 +86,6 @@ A common pattern is to have an interceptor at the root of a path that loads a re
     ...)
 
 (swagger/defroutes routes
-  {...}
   [[["/thing/:id" ^:interceptors [load-thing-from-db]
       {:get do-get-thing}
       {:put do-update-thing}
@@ -99,7 +97,6 @@ And finally we want to be able to use the schemas in the documentation to check 
 
 ```clj
 (swagger/defroutes routes
-  {...}
   [[["/" ^:interceptors [(swagger/coerce-params) (swagger/validate-response)]
       ["/thing/:id" ^:interceptors [load-thing-from-db]
         {:get do-get-thing}
