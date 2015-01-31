@@ -2,8 +2,11 @@
 
 [![Build Status](https://secure.travis-ci.org/frankiesardo/pedestal-swagger.png)](http://travis-ci.org/frankiesardo/pedestal-swagger) [![Dependencies Status](http://jarkeeper.com/frankiesardo/pedestal-swagger/status.png)](http://jarkeeper.com/frankiesardo/pedestal-swagger)
 
-
 Generate Swagger documentation from pedestal routes
+
+- [Documentation](http://frankiesardo.github.io/pedestal-swagger/)
+
+- [Demo](https://pedestal-swagger.herokuapp.com)
 
 ## Download
 
@@ -41,7 +44,7 @@ You can use these interceptors just like any other interceptors in your route de
 It's possible to generate the swagger paths documentation on the fly calling:
 
 ```clj
-(pedestal.swagger.doc/generate-docs {:title "My App} routes)
+(pedestal.swagger.doc/generate-docs {:title "My App"} routes)
 ;; => {:swagger "2.0"
 ;;     :title "My App"
 ;;     :paths {"/my-endpoint" {:get {...}}}}
