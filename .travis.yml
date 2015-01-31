@@ -5,16 +5,18 @@ before_script:
 - git config --global user.email $GIT_EMAIL
 - export REPO_URL="https://$GH_TOKEN@github.com/$GH_REPO.git"
 script: lein2 test
-deploy:
-  provider: heroku
-  api_key: $HEROKU_TOKEN
-after_deploy:
+after_script:
 - git clone -b gh-pages $REPO_URL doc
 - lein2 doc
 - cd doc
 - git add .
 - git commit -m 'Doc [ci skip]'
 - git push origin gh-pages --quiet
+- cd ..
+deploy:
+  provider: heroku
+  api_key: $HEROKU_TOKEN
+  on: heroku
 env:
   global:
   - GH_REPO="frankiesardo/pedestal-swagger"
