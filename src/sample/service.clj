@@ -68,7 +68,8 @@
 
 (swagger/defhandler get-all-pets
   {:summary "Get all pets in the store"
-   :responses {200 {:schema PetList}}}
+   :responses {200 {:schema PetList
+                    :description "A list of pets"}}}
   [_]
   (response (let [pets (vals (:pets @pet-store))]
               {:total (count pets)
@@ -77,11 +78,12 @@
 (swagger/defhandler add-pet
   {:summary "Add a new pet to the store"
    :parameters {:body Pet}
-   :responses {201 {:headers {(s/required-key "Location") s/Str}}
+   :responses {201 {:headers {(s/required-key "Location") s/Str}
+                    :description "Created"}
                400 {:description "Malformed parameters"}}}
   [{:keys [body-params] :as req}]
   (let [store (swap! pet-store assoc-in [:pets (:id body-params)] body-params)]
-      (created (route/url-for ::get-pet-by-id :params {:id (:id body-params)}) "")))
+    (created (route/url-for ::get-pet-by-id :params {:id (:id body-params)}) "")))
 
 (swagger/defbefore load-pet-from-db
   {:description "Assumes a pet exists with given ID"
@@ -97,7 +99,8 @@
 (swagger/defhandler get-pet-by-id
   {:summary "Find pet by ID"
    :description "Returns a pet based on ID"
-   :responses {200 {:schema Pet}}}
+   :responses {200 {:schema Pet
+                    :description "OK"}}}
   [{:keys [::pet] :as req}]
   (response pet))
 
@@ -122,7 +125,8 @@
 (swagger/defhandler add-user
   {:summary "Create user"
    :parameters {:body User}
-   :responses {201 {:headers {(s/required-key "Location") s/Str}}}}
+   :responses {201 {:headers {(s/required-key "Location") s/Str}
+                    :description "Created"}}}
   [{:keys [body-params] :as req}]
   (let [store (swap! pet-store assoc-in [:users (:username body-params)] body-params)]
     (created (route/url-for ::get-user-by-name :params {:username (:username body-params)}) "")))
@@ -130,7 +134,8 @@
 (swagger/defhandler get-user-by-name
   {:summary "Get user by name"
    :parameters {:path {:username s/Str}}
-   :responses {200 {:schema User}
+   :responses {200 {:schema User
+                    :description "OK"}
                404 {:description "User could not be found on the store"}}}
   [{:keys [path-params] :as req}]
   (if-let [user (get-in @pet-store [:users (:username path-params)])]
@@ -142,7 +147,8 @@
 (swagger/defhandler add-order
   {:summary "Create order"
    :parameters {:body NewOrder}
-   :responses {201 {:headers {(s/required-key "Location") s/Str}}}}
+   :responses {201 {:headers {(s/required-key "Location") s/Str}
+                    :description "Created"}}}
   [{:keys [body-params] :as req}]
   (let [id (rand-int 1000000)
         store (swap! pet-store assoc-in [:orders id] (assoc body-params :id id))]
@@ -161,7 +167,8 @@
 
 (swagger/defhandler get-order-by-id
   {:summary "Get user by name"
-   :responses {200 {:schema Order}}}
+   :responses {200 {:schema Order
+                    :description "OK"}}}
   [{:keys [::order] :as req}]
   (response (assoc order :status "Pending" :ship-date (java.util.Date.))))
 
