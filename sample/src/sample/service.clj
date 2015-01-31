@@ -196,34 +196,6 @@
 
 (def port (Integer. (or (System/getenv "PORT") 8080)))
 
-(def routing
-  (expand-routes
-   `[[["/" ^:interceptors [(body-params/body-params)
-                           bootstrap/json-body
-                           (swagger/body-params)
-                           (swagger/keywordize-params :form-params :headers)
-                           (swagger/coerce-params)
-                           (swagger/validate-response)]
-       ["/pets"
-        {:get get-all-pets}
-        {:post add-pet}
-        ["/:id" ^:interceptors [load-pet-from-db]
-         {:get get-pet-by-id}
-         {:put update-pet}
-         {:patch update-pet-with-form}]]
-       ["/users"
-        {:post add-user}
-        ["/:username"
-         {:get get-user-by-name}]]
-       ["/orders"
-        {:post add-order}
-        ["/:id" ^:interceptors [load-order-from-db]
-         {:get get-order-by-id}]]
-       ["/secure" ^:interceptors [basic-auth] {:delete delete-db}]
-
-       ["/doc" {:get [(swagger/swagger-doc)]}]
-       ["/*resource" {:get [(swagger/swagger-ui)]}]]]]))
-
 (swagger/defroutes routes
   {:title "Swagger Sample App"
    :description "This is a sample Petstore server."
@@ -240,7 +212,9 @@
       ["/:id" ^:interceptors [load-pet-from-db]
        {:get get-pet-by-id}
        {:put update-pet}
-       {:patch update-pet-with-form}]]
+       ; form params?
+;;       {:patch update-pet-with-form}
+       ]]
      ["/users"
       {:post add-user}
       ["/:username"
@@ -249,7 +223,8 @@
       {:post add-order}
       ["/:id" ^:interceptors [load-order-from-db]
        {:get get-order-by-id}]]
-     ["/secure" ^:interceptors [basic-auth] {:delete delete-db}]
+     ;; security?
+;     ["/secure" ^:interceptors [basic-auth] {:delete delete-db}]
 
      ["/doc" {:get [(swagger/swagger-doc)]}]
      ["/*resource" {:get [(swagger/swagger-ui)]}]]]])
