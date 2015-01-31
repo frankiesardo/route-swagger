@@ -3,10 +3,13 @@
             [clojure.test :refer :all]
             [io.pedestal.test :refer :all]
             [schema.core :as s]
+            [schema.test :as validation]
             [pedestal.swagger.doc :as doc]
             [io.pedestal.http.route.definition :as definition]
             [io.pedestal.http.body-params :as pedestal-body-params]
             [io.pedestal.http :as bootstrap]))
+
+(use-fixtures :each validation/validate-schemas)
 
 (defon-request auth-middleware
   {:description "Requires auth as header"

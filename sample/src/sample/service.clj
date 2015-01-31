@@ -3,7 +3,7 @@
             [io.pedestal.http :as bootstrap]
             [io.pedestal.http.route :as route]
             [io.pedestal.http.body-params :as body-params]
-            [io.pedestal.http.route.definition :refer [defroutes]]
+            [io.pedestal.http.route.definition :refer [defroutes expand-routes]]
             [io.pedestal.interceptor :as interceptor]
             [io.pedestal.impl.interceptor :refer [terminate]]
             [ring.util.response :refer [response not-found created]]
@@ -77,7 +77,7 @@
 (swagger/defhandler add-pet
   {:summary "Add a new pet to the store"
    :parameters {:body Pet}
-   :responses {201 {:headers ["Location"]}
+   :responses {201 {:headers {(s/required-key "Location") s/Str}}
                400 {:description "Malformed parameters"}}}
   [{:keys [body-params] :as req}]
   (let [store (swap! pet-store assoc-in [:pets (:id body-params)] body-params)]
@@ -122,7 +122,7 @@
 (swagger/defhandler add-user
   {:summary "Create user"
    :parameters {:body User}
-   :responses {201 {:headers ["Location"]}}}
+   :responses {201 {:headers {(s/required-key "Location") s/Str}}}}
   [{:keys [body-params] :as req}]
   (let [store (swap! pet-store assoc-in [:users (:username body-params)] body-params)]
     (created (route/url-for ::get-user-by-name :params {:username (:username body-params)}) "")))
@@ -142,7 +142,7 @@
 (swagger/defhandler add-order
   {:summary "Create order"
    :parameters {:body NewOrder}
-   :responses {201 {:headers ["Location"]}}}
+   :responses {201 {:headers {(s/required-key "Location") s/Str}}}}
   [{:keys [body-params] :as req}]
   (let [id (rand-int 1000000)
         store (swap! pet-store assoc-in [:orders id] (assoc body-params :id id))]
@@ -188,6 +188,34 @@
 ;;;; Routes
 
 (def port (Integer. (or (System/getenv "PORT") 8080)))
+
+(def routing
+  (expand-routes
+   `[[["/" ^:interceptors [(body-params/body-params)
+                           bootstrap/json-body
+                           (swagger/body-params)
+                           (swagger/keywordize-params :form-params :headers)
+                           (swagger/coerce-params)
+                           (swagger/validate-response)]
+       ["/pets"
+        {:get get-all-pets}
+        {:post add-pet}
+        ["/:id" ^:interceptors [load-pet-from-db]
+         {:get get-pet-by-id}
+         {:put update-pet}
+         {:patch update-pet-with-form}]]
+       ["/users"
+        {:post add-user}
+        ["/:username"
+         {:get get-user-by-name}]]
+       ["/orders"
+        {:post add-order}
+        ["/:id" ^:interceptors [load-order-from-db]
+         {:get get-order-by-id}]]
+       ["/secure" ^:interceptors [basic-auth] {:delete delete-db}]
+
+       ["/doc" {:get [(swagger/swagger-doc)]}]
+       ["/*resource" {:get [(swagger/swagger-ui)]}]]]]))
 
 (swagger/defroutes routes
   {:title "Swagger Sample App"
