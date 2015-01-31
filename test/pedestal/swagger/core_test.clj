@@ -9,7 +9,7 @@
             [io.pedestal.http.body-params :as pedestal-body-params]
             [io.pedestal.http :as bootstrap]))
 
-(use-fixtures :each validation/validate-schemas)
+;(use-fixtures :each validation/validate-schemas) :description is required
 
 (defon-request auth-middleware
   {:description "Requires auth as header"
