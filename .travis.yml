@@ -6,6 +6,7 @@ before_script:
 - export REPO_URL="https://$GH_TOKEN@github.com/$GH_REPO.git"
 script: lein2 test
 after_script:
+# Push docs on gh branch
 - git clone -b gh-pages $REPO_URL doc
 - lein2 doc
 - cd doc
@@ -13,10 +14,16 @@ after_script:
 - git commit -m 'Doc [ci skip]'
 - git push origin gh-pages --quiet
 - cd ..
-deploy:
-  provider: heroku
-  api_key: $HEROKU_TOKEN
-  on: heroku
+# Deploy snapshot to clojars
+# ...
+# Push example on heroku branch
+- git clone -b heroku $REPO_URL heroku
+- rsync -a --exclude=checkouts sample/ heroku/
+- cd heroku
+- git add .
+- git commit -m 'Heroku'
+- git push origin heroku --quiet
+- cd ..
 env:
   global:
   - GH_REPO="frankiesardo/pedestal-swagger"
