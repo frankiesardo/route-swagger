@@ -196,38 +196,39 @@
 
 (def port (Integer. (or (System/getenv "PORT") 8080)))
 
-(swagger/defroutes routes
-  {:title "Swagger Sample App"
-   :description "This is a sample Petstore server."
-   :version "2.0"}
-  [[["/" ^:interceptors [(body-params/body-params)
-                         bootstrap/json-body
-                         (swagger/body-params)
-                         (swagger/keywordize-params :form-params :headers)
-                         (swagger/coerce-params)
-                         (swagger/validate-response)]
-     ["/pets"
-      {:get get-all-pets}
-      {:post add-pet}
-      ["/:id" ^:interceptors [load-pet-from-db]
-       {:get get-pet-by-id}
-       {:put update-pet}
-       ; form params?
-;;       {:patch update-pet-with-form}
-       ]]
-     ["/users"
-      {:post add-user}
-      ["/:username"
-       {:get get-user-by-name}]]
-     ["/orders"
-      {:post add-order}
-      ["/:id" ^:interceptors [load-order-from-db]
-       {:get get-order-by-id}]]
-     ;; security?
-;     ["/secure" ^:interceptors [basic-auth] {:delete delete-db}]
+(s/with-fn-validation
+  (swagger/defroutes routes
+    {:title "Swagger Sample App"
+     :description "This is a sample Petstore server."
+     :version "2.0"}
+    [[["/" ^:interceptors [(body-params/body-params)
+                           bootstrap/json-body
+                           (swagger/body-params)
+                           (swagger/keywordize-params :form-params :headers)
+                           (swagger/coerce-params)
+                           (swagger/validate-response)]
+       ["/pets"
+        {:get get-all-pets}
+        {:post add-pet}
+        ["/:id" ^:interceptors [load-pet-from-db]
+         {:get get-pet-by-id}
+         {:put update-pet}
+                                        ; form params?
+         ;;       {:patch update-pet-with-form}
+         ]]
+       ["/users"
+        {:post add-user}
+        ["/:username"
+         {:get get-user-by-name}]]
+       ["/orders"
+        {:post add-order}
+        ["/:id" ^:interceptors [load-order-from-db]
+         {:get get-order-by-id}]]
+       ;; security?
+                                        ;     ["/secure" ^:interceptors [basic-auth] {:delete delete-db}]
 
-     ["/doc" {:get [(swagger/swagger-doc)]}]
-     ["/*resource" {:get [(swagger/swagger-ui)]}]]]])
+       ["/doc" {:get [(swagger/swagger-doc)]}]
+       ["/*resource" {:get [(swagger/swagger-ui)]}]]]]))
 
 (def service {:env :prod
               ::bootstrap/routes routes
