@@ -11,6 +11,8 @@
 
 ;(use-fixtures :each validation/validate-schemas) :description is required
 
+(def req s/required-key)
+
 (defon-request auth-middleware
   {:description "Requires auth as header"
    :parameters {:header {:auth s/Str}}}
@@ -46,12 +48,14 @@
    :responses {200 {:schema {:status s/Str}}
                400 {:schema {:error s/Any}}
                :default {:schema {:result [s/Str]}
-                         :headers {"Location" s/Str}}}}
+                         :headers {(req "Location") s/Str}}}}
   [{:keys [query-params]}]
   (case (:q query-params)
-    "ok" {:status 200 :body {:status "ok"} :headers {}}
-    "created" {:status 201 :body {:result ["a" "b"]} :headers {"Location" "Here!"}}
-    "fail" {:status 299 :body {:result "fail"} :headers {}}))
+    "ok" {:status 200 :body {:status "ok"}}
+    "created" {:status 201
+               :body {:result ["a" "b"]}
+               :headers {"Location" "Here!"}}
+    "fail" {:status 299 :body {:result "fail"}}))
 
 (defn make-app [options]
   (-> options
@@ -81,7 +85,7 @@
                          :responses {200 {:schema {:status s/Str}}
                                      400 {:schema {:error s/Any}}
                                      :default {:schema {:result [s/Str]}
-                                               :headers {"Location" s/Str}}}}}
+                                               :headers {(req "Location") s/Str}}}}}
                   "/:id"
                   {:put {:description "Requires id on path"
                          :summary "Put resource with id"
