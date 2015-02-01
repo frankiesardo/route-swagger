@@ -114,7 +114,7 @@
 
 (swagger/defhandler update-pet-with-form
   {:summary "Updates a pet in the store with form data"
-   :parameters {:form PartialPet}
+   :parameters {:formData PartialPet}
    :responses {400 {:description "Malformed parameters"}}}
   [{:keys [path-params form-params] :as req}]
   (let [store (swap! pet-store update-in [:pets (:id path-params)] merge form-params)]
@@ -213,8 +213,7 @@
         ["/:id" ^:interceptors [load-pet-from-db]
          {:get get-pet-by-id}
          {:put update-pet}
-                                        ; form params?
-         ;;       {:patch update-pet-with-form}
+         {:patch update-pet-with-form}
          ]]
        ["/users"
         {:post add-user}
