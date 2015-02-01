@@ -172,7 +172,7 @@
   defining a var that holds the expanded routes, compiles the swagger
   documentation and injects it into the routes as a meta tag."
   ([name route-spec]
-   `(defroutes ~name {:title "Swagger API" :version "0.0.1"} ~route-spec))
-  ([name info route-spec]
+   `(defroutes ~name {} ~route-spec))
+  ([name docs route-spec]
    `(let [route-table# (expand-routes (quote ~route-spec))]
-      (def ~name (doc/inject-docs ~info route-table#)))))
+      (def ~name (doc/inject-docs ~docs route-table#)))))

@@ -10,6 +10,7 @@
                  [metosin/ring-swagger "0.17.0"]
                  [metosin/ring-swagger-ui "2.1.0-alpha.6-SNAPSHOT"]]
   :min-lein-version "2.0.0"
-  :deploy-repositories [["releases"  :clojars]
-                        ["snapshots" :clojars]]
+  :deploy-repositories {"snapshots" {:url "https://clojars.org/repo"
+                                     :username [:gpg :env/clojars_username]
+                                     :password [:gpg :env/clojars_password]}}
   :profiles {:dev {:dependencies [[io.pedestal/pedestal.jetty "0.3.0"]]}})

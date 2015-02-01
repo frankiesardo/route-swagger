@@ -1,6 +1,6 @@
  (ns pedestal.swagger.doc
   (:require [io.pedestal.http.route :as route]
-            [ring.swagger.swagger2 :as spec]
+            [ring.swagger.swagger2-schema :as spec]
             [schema.core :as s]))
 
 (defn- deep-merge-with
@@ -41,17 +41,19 @@
 (defn- documented-handler? [route]
   (-> route :interceptors last meta ::doc))
 
-(s/defn generate-docs :- spec/Swagger
-  "Generates swagger docs from an info map and an expanded route
-  table. This function can also be used to generate documentation
+(s/defschema Paths
+  {s/Str {s/Keyword spec/Operation}})
+
+(s/defn doc-routes :- Paths
+  "Generates swagger paths from an expanded route table.
+  This function can also be used to generate documentation
   offline or for easy debugging (turning schema checks on)."
-  [info route-table]
-  (->> (for [{:keys [path method] :as route} route-table
-             :let [docs (find-docs route)]
-             :when (documented-handler? route)]
-         {path {method (apply deep-merge docs)}})
-       (apply merge-with merge)
-       (array-map :swagger "2.0" :info info :paths)))
+  [route-table]
+  (apply merge-with merge
+         (for [{:keys [path method] :as route} route-table
+               :let [docs (find-docs route)]
+               :when (documented-handler? route)]
+           {path {method (apply deep-merge docs)}})))
 
 
 (defn inject-docs
@@ -60,5 +62,8 @@
   selected route, so information like request and response schemas and
   the swagger object can be retrieved from its meta."
   [info route-table]
-  (let [swagger-object (generate-docs info route-table)]
+  (let [swagger-object {:swagger "2.0"
+                        :info (merge {:title "Swagger API" :version "0.0.1"}
+                                     info)
+                        :paths (doc-routes route-table)}]
     (inject-swagger-into-routes route-table swagger-object)))

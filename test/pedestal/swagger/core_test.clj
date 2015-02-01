@@ -53,10 +53,6 @@
     "created" {:status 201 :body {:result ["a" "b"]} :headers {"Location" "Here!"}}
     "fail" {:status 299 :body {:result "fail"} :headers {}}))
 
-(def info
-  {:title "Test"
-   :version "0.1"})
-
 (defn make-app [options]
   (-> options
       bootstrap/default-interceptors
@@ -77,32 +73,31 @@
      ["/doc" {:get [(swagger-doc)]}]]]])
 
 (deftest generates-correct-documentation
-  (let [expected {:swagger "2.0"
-                  :info info
-                  :paths
-                  {"/"
-                   {:get {:description "Requires auth as header"
-                          :summary "Get all resources"
-                          :parameters {:query {:q s/Str}
-                                       :header {:auth s/Str}}
-                          :responses {200 {:schema {:status s/Str}}
-                                      400 {:schema {:error s/Any}}
-                                      :default {:schema {:result [s/Str]}
-                                                :headers {"Location" s/Str}}}}}
-                   "/:id"
-                   {:put {:description "Requires id on path"
-                          :summary "Put resource with id"
-                          :parameters {:path {:id s/Int}
-                                       :header {:auth s/Str}
-                                       :body {:name s/Keyword}}}
-                    :delete {:description "Requires id on path"
-                             :summary "Delete resource with id"
-                             :parameters {:path {:id s/Int}
-                                          :header {:auth s/Str}
-                                          :query {:notify s/Bool}}}}}}]
-    (is (= expected (doc/generate-docs info routes)))))
+  (let [expected {"/"
+                  {:get {:description "Requires auth as header"
+                         :summary "Get all resources"
+                         :parameters {:query {:q s/Str}
+                                      :header {:auth s/Str}}
+                         :responses {200 {:schema {:status s/Str}}
+                                     400 {:schema {:error s/Any}}
+                                     :default {:schema {:result [s/Str]}
+                                               :headers {"Location" s/Str}}}}}
+                  "/:id"
+                  {:put {:description "Requires id on path"
+                         :summary "Put resource with id"
+                         :parameters {:path {:id s/Int}
+                                      :header {:auth s/Str}
+                                      :body {:name s/Keyword}}}
+                   :delete {:description "Requires id on path"
+                            :summary "Delete resource with id"
+                            :parameters {:path {:id s/Int}
+                                         :header {:auth s/Str}
+                                         :query {:notify s/Bool}}}}}]
+    (is (= expected (doc/doc-routes routes)))))
 
-(def app (make-app {::bootstrap/routes (doc/inject-docs info routes)}))
+(def app (make-app {::bootstrap/routes (doc/inject-docs
+                                        {:title "Test"
+                                         :version "0.1"} routes)}))
 
 (deftest coerces-params
   (are [resp req] (= resp (read-string (:body req)))

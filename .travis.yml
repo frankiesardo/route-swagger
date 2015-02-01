@@ -15,7 +15,7 @@ after_script:
 - git push origin gh-pages --quiet
 - cd ..
 # Deploy snapshot to clojars
-# ...
+- lein deploy
 # Push example on heroku branch
 - git clone -b heroku $REPO_URL heroku
 - rsync -a --exclude=checkouts sample/ heroku/
