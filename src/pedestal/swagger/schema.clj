@@ -68,17 +68,13 @@
              {:status 400 :headers {} :body (explain result)})
       (assoc context :request result))))
 
-(defn- require-keys [m]
-  (let [f (fn [[k v]] [(s/required-key k) v])]
-    (into {} (map f m))))
-
 (defn- ->response-schema [{:keys [headers schema]}]
   (loosen
    (merge
     (when schema
       {:body schema})
     (when headers
-      {:headers  (loosen (require-keys headers))}))))
+      {:headers (loosen headers)}))))
 
 (defn- with-response-defaults [r]
   (merge
