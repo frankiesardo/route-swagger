@@ -69,7 +69,7 @@
 (swagger/defhandler get-all-pets
   {:summary "Get all pets in the store"
    :responses {200 {:schema PetList
-                    :description "A list of pets"}}}
+                    :description "OK"}}}
   [_]
   (response (let [pets (vals (:pets @pet-store))]
               {:total (count pets)
