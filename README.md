@@ -10,7 +10,7 @@ Generate Swagger documentation from pedestal routes
 
 ## Download
 
-[![Clojars Project](http://clojars.org/pedestal-swagger/latest-version.svg)](http://clojars.org/pedestal-swagger)
+[![Clojars Project](http://clojars.org/frankiesardo/pedestal-swagger/latest-version.svg)](http://clojars.org/frankiesardo/pedestal-swagger)
 
 ## Usage
 
