@@ -7,7 +7,7 @@
   :codox {:src-dir-uri "http://github.com/frankiesardo/pedestal-swagger/blob/master/"}
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [io.pedestal/pedestal.service "0.3.0"]
-                 [metosin/ring-swagger "0.17.1-SNAPSHOT"]
+                 [metosin/ring-swagger "0.18.0"]
                  [metosin/ring-swagger-ui "2.1.1-M1"]]
   :min-lein-version "2.0.0"
   :deploy-repositories {"snapshots" {:url "https://clojars.org/repo"

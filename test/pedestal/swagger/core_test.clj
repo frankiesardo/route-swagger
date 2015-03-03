@@ -9,7 +9,7 @@
             [io.pedestal.http.body-params :as pedestal-body-params]
             [io.pedestal.http :as bootstrap]))
 
-;(use-fixtures :each validation/validate-schemas) :description is required
+(use-fixtures :each validation/validate-schemas)
 
 (def req s/required-key)
 
@@ -46,7 +46,6 @@
   {:summary "Get all resources"
    :parameters {:query {:q s/Str}}
    :responses {200 {:schema {:status s/Str}}
-               400 {:schema {:error s/Any}}
                :default {:schema {:result [s/Str]}
                          :headers {(req "Location") s/Str}}}}
   [{:keys [query-params]}]
@@ -83,7 +82,8 @@
                          :parameters {:query {:q s/Str}
                                       :header {:auth s/Str}}
                          :responses {200 {:schema {:status s/Str}}
-                                     400 {:schema {:error s/Any}}
+                                     400 {}
+                                     500 {}
                                      :default {:schema {:result [s/Str]}
                                                :headers {(req "Location") s/Str}}}}}
                   "/:id"
@@ -91,12 +91,14 @@
                          :summary "Put resource with id"
                          :parameters {:path {:id s/Int}
                                       :header {:auth s/Str}
-                                      :body {:name s/Keyword}}}
+                                      :body {:name s/Keyword}}
+                         :responses {400 {} 500 {}}}
                    :delete {:description "Requires id on path"
                             :summary "Delete resource with id"
                             :parameters {:path {:id s/Int}
                                          :header {:auth s/Str}
-                                         :query {:notify s/Bool}}}}}]
+                                         :query {:notify s/Bool}}
+                            :responses {400 {} 500 {}}}}}]
     (is (= expected (doc/doc-routes routes)))))
 
 (def app (make-app {::bootstrap/routes (doc/inject-docs

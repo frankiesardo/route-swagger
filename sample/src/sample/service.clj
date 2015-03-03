@@ -68,8 +68,7 @@
 
 (swagger/defhandler get-all-pets
   {:summary "Get all pets in the store"
-   :responses {200 {:schema PetList
-                    :description "OK"}}}
+   :responses {200 {:schema PetList}}}
   [_]
   (response (let [pets (vals (:pets @pet-store))]
               {:total (count pets)
@@ -78,9 +77,7 @@
 (swagger/defhandler add-pet
   {:summary "Add a new pet to the store"
    :parameters {:body Pet}
-   :responses {201 {:headers {(s/required-key "Location") s/Str}
-                    :description "Created"}
-               400 {:description "Malformed parameters"}}}
+   :responses {201 {:headers {(s/required-key "Location") s/Str}}}}
   [{:keys [body-params] :as req}]
   (let [store (swap! pet-store assoc-in [:pets (:id body-params)] body-params)]
     (created (route/url-for ::get-pet-by-id :params {:id (:id body-params)}) "")))
@@ -88,7 +85,7 @@
 (swagger/defbefore load-pet-from-db
   {:description "Assumes a pet exists with given ID"
    :parameters {:path {:id s/Int}}
-   :responses {404 {:description "ID does not correspond to any pet"}}}
+   :responses {404 {}}}
   [{:keys [request response] :as context}]
   (if-let [pet (get-in @pet-store [:pets (-> request :path-params :id)])]
     (assoc-in context [:request ::pet] pet)
@@ -99,23 +96,20 @@
 (swagger/defhandler get-pet-by-id
   {:summary "Find pet by ID"
    :description "Returns a pet based on ID"
-   :responses {200 {:schema Pet
-                    :description "OK"}}}
+   :responses {200 {:schema Pet}}}
   [{:keys [::pet] :as req}]
   (response pet))
 
 (swagger/defhandler update-pet
   {:summary "Update an existing pet"
-   :parameters {:body Pet}
-   :responses {400 {:description "Malformed parameters"}}}
+   :parameters {:body Pet}}
   [{:keys [path-params body-params] :as req}]
   (let [store (swap! pet-store assoc-in [:pets (:id path-params)] body-params)]
     (response "OK")))
 
 (swagger/defhandler update-pet-with-form
   {:summary "Updates a pet in the store with form data"
-   :parameters {:formData PartialPet}
-   :responses {400 {:description "Malformed parameters"}}}
+   :parameters {:formData PartialPet}}
   [{:keys [path-params form-params] :as req}]
   (let [store (swap! pet-store update-in [:pets (:id path-params)] merge form-params)]
     (response "OK")))
@@ -125,8 +119,7 @@
 (swagger/defhandler add-user
   {:summary "Create user"
    :parameters {:body User}
-   :responses {201 {:headers {(s/required-key "Location") s/Str}
-                    :description "Created"}}}
+   :responses {201 {:headers {(s/required-key "Location") s/Str}}}}
   [{:keys [body-params] :as req}]
   (let [store (swap! pet-store assoc-in [:users (:username body-params)] body-params)]
     (created (route/url-for ::get-user-by-name :params {:username (:username body-params)}) "")))
@@ -134,9 +127,8 @@
 (swagger/defhandler get-user-by-name
   {:summary "Get user by name"
    :parameters {:path {:username s/Str}}
-   :responses {200 {:schema User
-                    :description "OK"}
-               404 {:description "User could not be found on the store"}}}
+   :responses {200 {:schema User}
+               404 {}}}
   [{:keys [path-params] :as req}]
   (if-let [user (get-in @pet-store [:users (:username path-params)])]
     (response user)
@@ -147,8 +139,7 @@
 (swagger/defhandler add-order
   {:summary "Create order"
    :parameters {:body NewOrder}
-   :responses {201 {:headers {(s/required-key "Location") s/Str}
-                    :description "Created"}}}
+   :responses {201 {:headers {(s/required-key "Location") s/Str}}}}
   [{:keys [body-params] :as req}]
   (let [id (rand-int 1000000)
         store (swap! pet-store assoc-in [:orders id] (assoc body-params :id id))]
@@ -157,7 +148,7 @@
 (swagger/defbefore load-order-from-db
   {:description "Assumes an order exists with given ID"
    :parameters {:path {:id s/Int}}
-   :responses {404 {:description "ID does not correspond to any order"}}}
+   :responses {404 {}}}
   [{:keys [request response] :as context}]
   (if-let [order (get-in @pet-store [:orders (-> request :path-params :id)])]
     (assoc-in context [:request ::order] order)
@@ -167,8 +158,7 @@
 
 (swagger/defhandler get-order-by-id
   {:summary "Get user by name"
-   :responses {200 {:schema Order
-                    :description "OK"}}}
+   :responses {200 {:schema Order}}}
   [{:keys [::order] :as req}]
   (response (assoc order :status "Pending" :ship-date (java.util.Date.))))
 
@@ -177,7 +167,7 @@
 (swagger/defbefore basic-auth
   {:description "Check basic auth credentials"
    :security {"basic" []}
-   :responses {403 {:description "Invalid credentials"}}}
+   :responses {403 {}}}
   [{:keys [request response] :as context}]
   (let [auth (get-in request [:headers :authorization])]
     (if-not (= auth (str "Basic " (codec/base64-encode (.getBytes "foo:bar"))))

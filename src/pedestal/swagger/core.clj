@@ -4,19 +4,24 @@
             [io.pedestal.http.route.definition :refer [expand-routes]]
             [io.pedestal.interceptor :as interceptor]
             [ring.util.response :refer [response resource-response redirect]]
-            [ring.swagger.swagger2 :as spec]))
+            [ring.swagger.swagger2 :as spec]
+            [ring.util.http-status :as status]))
 
 (interceptor/definterceptorfn swagger-doc
   "Creates an interceptor that serves the generated documentation on
    the path fo your choice.  Accepts an optional function f that takes
-   the context and the swagger-object and returns a ring response."
-  ([] (swagger-doc (fn [context swagger-object]
-                     (response (spec/swagger-json swagger-object)))))
+   the swagger-object and returns a ring response."
+  ([] (swagger-doc
+       (fn [swagger-object]
+         (response (spec/swagger-json
+                    swagger-object
+                    {:default-response-description-fn
+                     #(get-in status/status [% :description] "")})))))
   ([f]
-     (interceptor/before
-      ::doc/swagger-doc
-      (fn [{:keys [route] :as context}]
-        (assoc context :response (f context (-> route meta ::doc/swagger-doc)))))))
+   (interceptor/before
+    ::doc/swagger-doc
+    (fn [{:keys [route] :as context}]
+      (assoc context :response (f (-> route meta ::doc/swagger-doc)))))))
 
 (interceptor/definterceptorfn swagger-ui
   "Creates an interceptor that serves the swagger ui on a path of your
@@ -46,11 +51,13 @@
   consult 'pedestal.swagger.schema/?bad-request'."
   ([] (coerce-params schema/?bad-request))
   ([f]
+   (with-meta
      (interceptor/before
       (fn [{:keys [request route] :as context}]
         (if-let [schema (->> route meta ::doc/doc :parameters)]
           (f schema context)
-          context)))))
+          context)))
+     {::doc/doc {:responses {400 {}}}})))
 
 (interceptor/definterceptorfn validate-response
   "Creates an interceptor that validates the response for the selected
@@ -62,13 +69,16 @@
   consult 'pedestal.swagger.schema/?internal-server-error'."
   ([] (validate-response schema/?internal-server-error))
   ([f]
+   (with-meta
      (interceptor/after
       (fn [{:keys [response route] :as context}]
         (if-let [schemas (->> route meta ::doc/doc :responses)]
-          (if-let [schema (or (schemas (:status response)) (schemas :default))]
+          (if-let [schema (or (schemas (:status response))
+                              (schemas :default))]
             (f schema context)
             context)
-          context)))))
+          context)))
+     {::doc/doc {:responses {500 {}}}})))
 
 ;; Very useful interceptors
 
