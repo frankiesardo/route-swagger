@@ -55,7 +55,7 @@
     :headers      {}} r))
 
 (defn coerce-params [schema value]
-  ((c/coercer (->request-schema schema) c/+string-coercions+)
+  ((c/coercer (->request-schema schema) c/string-coercion-matcher)
    (with-request-defaults value)))
 
 (defn ?bad-request
