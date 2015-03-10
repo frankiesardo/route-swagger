@@ -54,14 +54,17 @@
 
 ;; == CI tasks ========================================
 
-(require '[clojure.java.shell :only [sh]])
-
-(defn null-task [] identity)
+(require '[clojure.java.shell :only [sh]]
+         '[boot.git :as git])
 
 (task-options!
  push {:gpg-user-id (env "GPG_USER_ID")
        :gpg-keyring (str (env "HOME") "/.gnupg/secring.asc")
        :gpg-passphrase (env "GPG_PASSPHRASE")})
+
+(defn null-task [] identity)
+
+(defn last-commit [] (sh "git" "log" "--oneline" "-1"))
 
 (deftask promote
   []
@@ -99,7 +102,7 @@
   (sh "rsync" "-a" "--exclude=checkouts" "doc/" "gh-pages/")
   (sh "cd" "gh-pages")
   (sh "add" ".")
-  (sh "git" "commit" "-m" #_(env "$TRAVIS_COMMIT") "Doc")
+  (sh "git" "commit" "-m" (last-commit))
   (sh "git" "push" "origin" "gh-pages" "--quiet")
   (sh "cd" "..")
   (null-task))
@@ -111,7 +114,7 @@
   (sh "rsync" "-a" "--exclude=checkouts" "sample/" "heroku/")
   (sh "cd" "heroku")
   (sh "add" ".")
-  (sh "git" "commit" "-m" (env "$TRAVIS_COMMIT"))
+  (sh "git" "commit" "-m" (last-commit))
   (sh "git" "push" "origin" "heroku" "--quiet")
   (sh "cd" "..")
   (null-task))
@@ -130,11 +133,8 @@
 
 (deftask deploy
   []
-  (println "Travis commit" (env "TRAVIS_COMMIT"))
-  (println "Travis tag" (env "TRAVIS_TAG"))
-  (println "Travis tag" (env "CLOJARS_USERNAME"))
   (if (= "false" (env "TRAVIS_PULL_REQUEST"))
-    (if (re-matches #".*[ci release].*" (env "TRAVIS_COMMIT"))
+    (if (.contains (last-commit) "[ci release]")
       (release)
       (snapshot))
     (null-task)))
