@@ -9,7 +9,7 @@
  :repositories {"clojars" {:url "https://clojars.org/repo/"
                            :username (env "CLOJARS_USERNAME")
                            :password (env "CLOJARS_PASSWORD")}}
- :source-paths #{"src/"}
+ :source-paths #{"src"}
  :test-paths   #{"test"})
 
 (def version "0.3.1-SNAPSHOT")
@@ -130,6 +130,9 @@
 
 (deftask deploy
   []
+  (println "Travis pr" (env "TRAVIS_PULL_REQUEST"))
+  (println "Travis commit" (env "TRAVIS_COMMIT"))
+  (println "Travis tag" (env "TRAVIS_TAG"))
   (if (= "false" (env "TRAVIS_PULL_REQUEST"))
     (if (re-matches #".*[ci release].*" (env "TRAVIS_COMMIT"))
       (release)
