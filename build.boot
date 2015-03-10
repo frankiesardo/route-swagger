@@ -54,7 +54,7 @@
 
 ;; == CI tasks ========================================
 
-(require '[clojure.java.shell :only [sh]]
+(require '[clojure.java.shell :as shell]
          '[boot.git :as git])
 
 (task-options!
@@ -64,7 +64,7 @@
 
 (defn null-task [] identity)
 
-(defn last-commit [] (sh "git" "log" "--oneline" "-1"))
+(defn last-commit [] (:out (shell/sh "git" "log" "--oneline" "-1")))
 
 (deftask promote
   []
@@ -82,41 +82,41 @@
 
 (deftask tag
   []
-  (sh "git" "tag" "-a" (str "v" version) "-m" version)
+  (shell/sh "git" "tag" "-a" (str "v" version) "-m" version)
   (null-task))
 
 (deftask commit
   []
-  (sh "git" "commit" "-m" version)
+  (shell/sh "git" "commit" "-m" version)
   (null-task))
 
 (deftask ->master
   []
-  (sh "git" "push" "origin" "master" "--quiet")
+  (shell/sh "git" "push" "origin" "master" "--quiet")
   (null-task))
 
 (deftask ->gh-pages
   "Push doc directory to gh-pages branch"
   []
-  (sh "git" "clone" "-b" "gh-pages" (env "$REPO_URL") "gh-pages")
-  (sh "rsync" "-a" "--exclude=checkouts" "doc/" "gh-pages/")
-  (sh "cd" "gh-pages")
-  (sh "add" ".")
-  (sh "git" "commit" "-m" (last-commit))
-  (sh "git" "push" "origin" "gh-pages" "--quiet")
-  (sh "cd" "..")
+  (shell/sh "git" "clone" "-b" "gh-pages" (env "$REPO_URL") "gh-pages")
+  (shell/sh "rsync" "-a" "--exclude=checkouts" "doc/" "gh-pages/")
+  (shell/sh "cd" "gh-pages")
+  (shell/sh "add" ".")
+  (shell/sh "git" "commit" "-m" (last-commit))
+  (shell/sh "git" "push" "origin" "gh-pages" "--quiet")
+  (shell/sh "cd" "..")
   (null-task))
 
 (deftask ->heroku
   "Push sample directory to heroku branch"
   []
-  (sh "git" "clone" "-b" "heroku" (env "$REPO_URL") "heroku")
-  (sh "rsync" "-a" "--exclude=checkouts" "sample/" "heroku/")
-  (sh "cd" "heroku")
-  (sh "add" ".")
-  (sh "git" "commit" "-m" (last-commit))
-  (sh "git" "push" "origin" "heroku" "--quiet")
-  (sh "cd" "..")
+  (shell/sh "git" "clone" "-b" "heroku" (env "$REPO_URL") "heroku")
+  (shell/sh "rsync" "-a" "--exclude=checkouts" "sample/" "heroku/")
+  (shell/sh "cd" "heroku")
+  (shell/sh "add" ".")
+  (shell/sh "git" "commit" "-m" (last-commit))
+  (shell/sh "git" "push" "origin" "heroku" "--quiet")
+  (shell/sh "cd" "..")
   (null-task))
 
 (deftask ->clojars
@@ -138,3 +138,5 @@
       (release)
       (snapshot))
     (null-task)))
+
+(deftask up [] (null-task))
