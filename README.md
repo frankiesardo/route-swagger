@@ -87,6 +87,13 @@ And of course you can add a swagger-ui endpoint to provide an easy way to view a
 
 _Note that the swagger-ui endpoint requires a_ `*resource` _splat parameter._
 
+If your endpoint is a plain ring handler or a pedestal interceptor it will not be included in your documentation.
+
+```clj
+(defn a-hidden-endpoint [request]
+ ...)
+```
+
 All this would be a little uninteresting if we weren't able to leverage one of Pedestal's most interesting features: sharing logic between endpoints via interceptors.
 
 A common pattern is to have an interceptor at the root of a path that loads a resource.
