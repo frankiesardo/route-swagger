@@ -5,6 +5,11 @@ install:
 - wget -O boot https://github.com/boot-clj/boot/releases/download/2.0.0-rc9/boot.sh
 - chmod 755 boot
 - ./boot -V
+before_script:
+- echo $CI
+- echo $TRAVIS_PULL_REQUEST
+- echo $TRAVIS_COMMIT
+- echo $TRAVIS_TAG
 script: ./boot test
 after_script:
 - echo $INIT_ENV >> ~/init.sh && chmod +x ~/init.sh && . ~/init.sh
