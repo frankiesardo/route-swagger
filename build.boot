@@ -1,8 +1,14 @@
+(defn env [n]
+  (System/getProperty n))
+
 (merge-env!
  :dependencies '[[org.clojure/clojure "1.6.0"]
                  [io.pedestal/pedestal.service "0.3.0"]
                  [metosin/ring-swagger "0.18.0"]
                  [metosin/ring-swagger-ui "2.1.1-M1"]]
+ :repositories {"clojars" {:url "https://clojars.org/repo/"
+                           :username (env "CLOJARS_USERNAME")
+                           :password (env "CLOJARS_PASSWORD")}}
  :source-paths #{"src/"}
  :test-paths   #{"test"})
 
@@ -49,9 +55,6 @@
 ;; == CI tasks ========================================
 
 (require '[clojure.java.shell :only [sh]])
-
-(defn env [n]
-  (System/getProperty n))
 
 (defn null-task [] identity)
 
