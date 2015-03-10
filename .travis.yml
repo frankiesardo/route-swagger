@@ -1,32 +1,14 @@
 language: clojure
-lein: lein2
-before_script:
-- git config --global user.name $GIT_NAME
-- git config --global user.email $GIT_EMAIL
-- export REPO_URL="https://$GH_TOKEN@github.com/$GH_REPO.git"
-script: lein2 test
+jdk:
+- oraclejdk8
+install:
+- wget -O boot https://github.com/boot-clj/boot/releases/download/2.0.0-rc9/boot.sh
+- chmod 755 boot
+- ./boot -V
+script: ./boot test
 after_script:
-# Push docs on gh branch
-- git clone -b gh-pages $REPO_URL doc
-- lein2 doc
-- cd doc
-- git add .
-- git commit -m 'Doc [ci skip]'
-- git push origin gh-pages --quiet
-- cd ..
-# Deploy snapshot to clojars
-- lein deploy
-# Push example on heroku branch
-- git clone -b heroku $REPO_URL heroku
-- rsync -a --exclude=checkouts sample/ heroku/
-- cd heroku
-- git add .
-- git commit -m 'Heroku'
-- git push origin heroku --quiet
-- cd ..
-env:
-  global:
-  - GH_REPO="frankiesardo/pedestal-swagger"
+- echo $INIT_ENV >> ~/init.sh && chmod +x ~/init.sh && . ~/init.sh
+- ./boot deploy
 notifications:
   email: false
 sudo: false
