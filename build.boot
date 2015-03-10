@@ -98,7 +98,8 @@
 (deftask ->gh-pages
   "Push doc directory to gh-pages branch"
   []
-  (shell/sh "git" "clone" "-b" "gh-pages" (env "$REPO_URL") "gh-pages")
+  (println "Pushing to gh-pages")
+  (shell/sh "git" "clone" "-b" "gh-pages" (env "REPO_URL") "gh-pages")
   (shell/sh "rsync" "-a" "--exclude=checkouts" "doc/" "gh-pages/")
   (shell/sh "cd" "gh-pages")
   (shell/sh "add" ".")
@@ -110,7 +111,8 @@
 (deftask ->heroku
   "Push sample directory to heroku branch"
   []
-  (shell/sh "git" "clone" "-b" "heroku" (env "$REPO_URL") "heroku")
+  (println "Pushing to heroku")
+  (shell/sh "git" "clone" "-b" "heroku" (env "REPO_URL") "heroku")
   (shell/sh "rsync" "-a" "--exclude=checkouts" "sample/" "heroku/")
   (shell/sh "cd" "heroku")
   (shell/sh "add" ".")
@@ -120,8 +122,9 @@
   (null-task))
 
 (deftask ->clojars
- [_ release bool]
- (comp (pom) (jar) (push :gpg-sign release)))
+  [_ release bool]
+  (println "Pushing to clojars")
+  (comp (pom) (jar) (push :gpg-sign release)))
 
 (deftask snapshot
   []
@@ -133,6 +136,7 @@
 
 (deftask deploy
   []
+  (println (take 3 (env "REPO_URL")))
   (if (= "false" (env "TRAVIS_PULL_REQUEST"))
     (if (.contains (last-commit) "[ci release]")
       (release)
