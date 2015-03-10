@@ -1,5 +1,5 @@
 (defn env [n]
-  (System/getProperty n))
+  (System/getenv n))
 
 (merge-env!
  :dependencies '[[org.clojure/clojure "1.6.0"]
@@ -130,9 +130,9 @@
 
 (deftask deploy
   []
-  (println "Travis pr" (env "TRAVIS_PULL_REQUEST"))
   (println "Travis commit" (env "TRAVIS_COMMIT"))
   (println "Travis tag" (env "TRAVIS_TAG"))
+  (println "Travis tag" (env "CLOJARS_USERNAME"))
   (if (= "false" (env "TRAVIS_PULL_REQUEST"))
     (if (re-matches #".*[ci release].*" (env "TRAVIS_COMMIT"))
       (release)
