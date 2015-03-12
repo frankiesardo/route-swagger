@@ -46,8 +46,7 @@
   (require '[clojure.tools.namespace.find :refer [find-namespaces-in-dir]])
   (let [find-namespaces-in-dir (resolve 'clojure.tools.namespace.find/find-namespaces-in-dir)
         test-nses              (->> (get-env :test-paths)
-                                    (mapcat #(find-namespaces-in-dir (clojure.java.io/file %)))
-                                    distinct)]
+                                    (mapcat #(find-namespaces-in-dir (clojure.java.io/file %)))                                    distinct)]
     (doall (map require test-nses))
     (apply clojure.test/run-tests test-nses)))
 
@@ -55,7 +54,8 @@
 ;; == CI tasks ========================================
 
 (require '[clojure.java.shell :as shell]
-         '[boot.git :as git])
+         '[boot.git :as git]
+         '[boot.pod :as pod])
 
 (task-options!
  push {:gpg-user-id (env "GPG_USER_ID")
@@ -64,7 +64,7 @@
 
 (defn null-task [] identity)
 
-(defn last-commit [] (:out (shell/sh "git" "log" "--oneline" "-1")))
+(defn last-commit [] (:out (shell/sh "git" "log" "-1" "--pretty=%s")))
 
 (deftask promote
   []
@@ -82,44 +82,44 @@
 
 (deftask tag
   []
-  (shell/sh "git" "tag" "-a" (str "v" version) "-m" version)
+  (sh "git" "tag" "-a" (str "v" version) "-m" version)
   (null-task))
 
 (deftask commit
   []
-  (shell/sh "git" "commit" "-m" version)
+  (sh "git" "commit" "-m" version)
   (null-task))
 
 (deftask ->master
   []
-  (shell/sh "git" "push" "origin" "master" "--quiet")
+  (sh "git" "push" "origin" "master" "--quiet")
   (null-task))
 
 (deftask ->gh-pages
   "Push doc directory to gh-pages branch"
   []
-  (println "Pushing to gh-pages")
-  (shell/sh "git" "clone" "-b" "gh-pages" (env "REPO_URL") "gh-pages")
-  (shell/sh "rsync" "-a" "--exclude=checkouts" "doc/" "gh-pages/")
-  (shell/sh "cd" "gh-pages")
-  (shell/sh "add" ".")
-  (shell/sh "git" "commit" "-m" (last-commit))
-  (shell/sh "git" "push" "origin" "gh-pages" "--quiet")
-  (shell/sh "cd" "..")
-  (null-task))
+  (fn [handler]
+    (fn [fileset]
+      (let [last-commit (last-commit)]
+        (shell/sh "git" "clone" "-b" "gh-pages" (env "REPO_URL") "gh-pages")
+        (shell/sh "rsync" "-a" "doc/" "gh-pages/")
+        (shell/sh "git" "add" "." :dir "./gh-pages/")
+        (shell/sh "git" "commit" "-m" last-commit  :dir "./gh-pages/")
+        (shell/sh "git" "push" "origin" "gh-pages" "--quiet" :dir "./gh-pages/")
+        (handler fileset)))))
 
 (deftask ->heroku
   "Push sample directory to heroku branch"
   []
-  (println "Pushing to heroku")
-  (shell/sh "git" "clone" "-b" "heroku" (env "REPO_URL") "heroku")
-  (shell/sh "rsync" "-a" "--exclude=checkouts" "sample/" "heroku/")
-  (shell/sh "cd" "heroku")
-  (shell/sh "add" ".")
-  (shell/sh "git" "commit" "-m" (last-commit))
-  (shell/sh "git" "push" "origin" "heroku" "--quiet")
-  (shell/sh "cd" "..")
-  (null-task))
+  (fn [handler]
+    (fn [fileset]
+      (let [last-commit (last-commit)]
+        (shell/sh "git" "clone" "-b" "heroku" (env "REPO_URL") "heroku")
+        (shell/sh "rsync" "-a" "--exclude=checkouts" "sample/" "heroku/")
+        (shell/sh "git" "add" "." :dir "./heroku/")
+        (shell/sh "git" "commit" "-m" last-commit  :dir "./heroku/")
+        (shell/sh "git" "push" "origin" "heroku" "--quiet" :dir "./heroku/")
+        (handler fileset)))))
 
 (deftask ->clojars
   [_ release bool]
@@ -136,7 +136,6 @@
 
 (deftask deploy
   []
-  (println (take 3 (env "REPO_URL")))
   (if (= "false" (env "TRAVIS_PULL_REQUEST"))
     (if (.contains (last-commit) "[ci release]")
       (release)
