@@ -70,7 +70,7 @@
       (throw (ex-info err r))
       (println out))))
 
-(defn last-commit [] (:out (shell "git" "log" "-1" "--pretty=%s")))
+(defn last-commit [] (:out (clojure.java.shell/sh "git" "log" "-1" "--pretty=%s")))
 
 (deftask promote
   []
