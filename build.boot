@@ -53,7 +53,7 @@
 
 ;; == CI tasks ========================================
 
-(require '[clojure.java.shell :as shell]
+(require '[clojure.java.shell]
          '[boot.git :as git]
          '[boot.pod :as pod])
 
@@ -65,7 +65,7 @@
 (defn null-task [] identity)
 
 (defn shell [& args]
-  (let [{:keys [exit out err] :as r} (apply shell/sh args)]
+  (let [{:keys [exit out err] :as r} (apply clojure.java.shell/sh args)]
     (if (not= exit 0)
       (throw (ex-info err r))
       (println out))))
