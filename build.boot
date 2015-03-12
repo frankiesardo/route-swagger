@@ -65,7 +65,7 @@
 (defn null-task [] identity)
 
 (defn shell [& args]
-  (let [{:keys [exit out err] :as r} (apply sh args)]
+  (let [{:keys [exit out err] :as r} (apply shell/sh args)]
     (if (not= exit 0)
       (throw (ex-info err r))
       (println out))))
