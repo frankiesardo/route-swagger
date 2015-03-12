@@ -64,7 +64,13 @@
 
 (defn null-task [] identity)
 
-(defn last-commit [] (:out (shell/sh "git" "log" "-1" "--pretty=%s")))
+(defn shell [& args]
+  (let [{:keys [exit out err] :as r} (apply sh args)]
+    (if (not= exit 0)
+      (throw (ex-info err r))
+      (println out))))
+
+(defn last-commit [] (:out (shell "git" "log" "-1" "--pretty=%s")))
 
 (deftask promote
   []
@@ -101,11 +107,11 @@
   (fn [handler]
     (fn [fileset]
       (let [last-commit (last-commit)]
-        (shell/sh "git" "clone" "-b" "gh-pages" (env "REPO_URL") "gh-pages")
-        (shell/sh "rsync" "-a" "doc/" "gh-pages/")
-        (shell/sh "git" "add" "." :dir "./gh-pages/")
-        (shell/sh "git" "commit" "-m" last-commit  :dir "./gh-pages/")
-        (shell/sh "git" "push" "origin" "gh-pages" "--quiet" :dir "./gh-pages/")
+        (shell "git" "clone" "-b" "gh-pages" (env "REPO_URL") "gh-pages")
+        (shell "rsync" "-a" "doc/" "gh-pages/")
+        (shell "git" "add" "." :dir "./gh-pages/")
+        (shell "git" "commit" "-m" last-commit  :dir "./gh-pages/")
+        (shell "git" "push" "origin" "gh-pages" "--quiet" :dir "./gh-pages/")
         (handler fileset)))))
 
 (deftask ->heroku
@@ -114,11 +120,11 @@
   (fn [handler]
     (fn [fileset]
       (let [last-commit (last-commit)]
-        (shell/sh "git" "clone" "-b" "heroku" (env "REPO_URL") "heroku")
-        (shell/sh "rsync" "-a" "--exclude=checkouts" "sample/" "heroku/")
-        (shell/sh "git" "add" "." :dir "./heroku/")
-        (shell/sh "git" "commit" "-m" last-commit  :dir "./heroku/")
-        (shell/sh "git" "push" "origin" "heroku" "--quiet" :dir "./heroku/")
+        (shell "git" "clone" "-b" "heroku" (env "REPO_URL") "heroku")
+        (shell "rsync" "-a" "--exclude=checkouts" "sample/" "heroku/")
+        (shell "git" "add" "." :dir "./heroku/")
+        (shell "git" "commit" "-m" last-commit  :dir "./heroku/")
+        (shell "git" "push" "origin" "heroku" "--quiet" :dir "./heroku/")
         (handler fileset)))))
 
 (deftask ->clojars
