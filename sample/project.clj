@@ -4,13 +4,10 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [frankiesardo/pedestal-swagger "0.3.1-SNAPSHOT"]
-
                  [io.pedestal/pedestal.service "0.3.0"]
                  [io.pedestal/pedestal.jetty "0.3.0"]
-
-
-
-                 [ch.qos.logback/logback-classic "1.1.2" :exclusions [org.slf4j/slf4j-api]]
+                 [ch.qos.logback/logback-classic "1.1.2"
+                  :exclusions [org.slf4j/slf4j-api]]
                  [org.slf4j/jul-to-slf4j "1.7.7"]
                  [org.slf4j/jcl-over-slf4j "1.7.7"]
                  [org.slf4j/log4j-over-slf4j "1.7.7"]]

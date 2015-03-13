@@ -46,7 +46,8 @@
   (require '[clojure.tools.namespace.find :refer [find-namespaces-in-dir]])
   (let [find-namespaces-in-dir (resolve 'clojure.tools.namespace.find/find-namespaces-in-dir)
         test-nses              (->> (get-env :test-paths)
-                                    (mapcat #(find-namespaces-in-dir (clojure.java.io/file %)))                                    distinct)]
+                                    (mapcat #(find-namespaces-in-dir (clojure.java.io/file %)))
+                                    distinct)]
     (doall (map require test-nses))
     (apply clojure.test/run-tests test-nses)))
 
@@ -66,11 +67,19 @@
 
 (defn shell [& args]
   (let [{:keys [exit out err] :as r} (apply clojure.java.shell/sh args)]
-    (if (not= exit 0)
-      (throw (ex-info err r))
-      (println out))))
+    (when (not= exit 0)
+      (throw (ex-info err r)))
+    out))
 
 (defn last-commit [] (:out (clojure.java.shell/sh "git" "log" "-1" "--pretty=%s")))
+
+;; e.g. "doc/" "gh-pages"
+(defn sync [dir branch msg]
+  (shell "git" "clone" "-b" branch (env "REPO_URL") branch)
+  (shell "rsync" "-a" dir branch)
+  (shell "git" "add" "." :dir branch)
+  (shell "git" "commit" "-m" msg  :dir branch)
+  (shell "git" "push" "origin" branch "--quiet" :dir branch))
 
 (deftask promote
   []
@@ -106,35 +115,24 @@
   []
   (fn [handler]
     (fn [fileset]
-      (let [last-commit (last-commit)]
-        (shell "git" "clone" "-b" "gh-pages" (env "REPO_URL") "gh-pages")
-        (shell "rsync" "-a" "doc/" "gh-pages/")
-        (shell "git" "add" "." :dir "./gh-pages/")
-        (shell "git" "commit" "-m" last-commit  :dir "./gh-pages/")
-        (shell "git" "push" "origin" "gh-pages" "--quiet" :dir "./gh-pages/")
-        (handler fileset)))))
+      (sync "doc/" "gh-pages" (last-commit))
+      (handler fileset))))
 
 (deftask ->heroku
   "Push sample directory to heroku branch"
   []
   (fn [handler]
     (fn [fileset]
-      (let [last-commit (last-commit)]
-        (shell "git" "clone" "-b" "heroku" (env "REPO_URL") "heroku")
-        (shell "rsync" "-a" "--exclude=checkouts" "sample/" "heroku/")
-        (shell "git" "add" "." :dir "./heroku/")
-        (shell "git" "commit" "-m" last-commit  :dir "./heroku/")
-        (shell "git" "push" "origin" "heroku" "--quiet" :dir "./heroku/")
-        (handler fileset)))))
+      (sync "sample/" "heroku" (last-commit))
+      (handler fileset))))
 
 (deftask ->clojars
   [_ release bool]
-  (println "Pushing to clojars")
   (comp (pom) (jar) (push :gpg-sign release)))
 
 (deftask snapshot
   []
-  (comp (->clojars) (->heroku)))
+  (comp #_(->clojars) (->heroku)))
 
 (deftask release
   []
