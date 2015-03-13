@@ -132,7 +132,7 @@
 
 (deftask snapshot
   []
-  (comp #_(->clojars) (->heroku)))
+  (comp (->clojars) (->heroku)))
 
 (deftask release
   []
