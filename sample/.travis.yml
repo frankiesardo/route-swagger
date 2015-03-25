@@ -1,6 +1,9 @@
 language: clojure
-lein: lein2
-script: lein2 test
+jdk:
+- oraclejdk8
+script: lein test
+before_deploy:
+- echo $INIT_ENV >> ~/init.sh && chmod +x ~/init.sh && . ~/init.sh
 deploy:
   provider: heroku
   api_key: $HEROKU_TOKEN
