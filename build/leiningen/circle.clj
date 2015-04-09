@@ -12,7 +12,7 @@
   (condp re-find (env "CIRCLE_BRANCH")
     #"master"
     (do (deploy/deploy project "clojars")
-        (rsync/rsync "sample/" "heroku"))
+        (rsync/rsync project "sample/" "heroku"))
 
     #"(?i)release"
     (do
