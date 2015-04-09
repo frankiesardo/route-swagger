@@ -15,10 +15,9 @@
                   ["doc"]
                   ["vcs" "commit"]
                   ["vcs" "tag" "v"]
+                  ["deploy" "clojars"]
+                  ["rsync" "doc/" "gh-pages"]
                   ["change" "version" "leiningen.release/bump-version"]
                   ["vcs" "commit"]
-                  ["vcs" "push" "--quiet"]]
-  :deploy-repositories {"clojars" {:url "https://clojars.org/repo"
-                                   :username [:gpg :env/clojars_username]
-                                   :password [:gpg :env/clojars_password]}}
+                  ["vcs" "push"]]
   :profiles {:dev {:dependencies [[io.pedestal/pedestal.jetty "0.3.0"]]}})
