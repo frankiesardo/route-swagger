@@ -46,7 +46,7 @@ Documented paths are generated from your route table. You can inspect at any tim
 ```clj
 (pedestal.swagger.doc/doc-routes routes)
 ;; => {"/my-endpoint" {:get {...}}
-       ...}
+;;     ...}
 ```
 
 But what you normally want is to inject the documentation in your route table, so that is available to your interceptors. There's a handy macro for that:
