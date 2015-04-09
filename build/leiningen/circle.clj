@@ -11,8 +11,9 @@
 (defn circle [project & args]
   (condp re-find (env "CIRCLE_BRANCH")
     #"master"
-    (do (deploy/deploy project "clojars")
-        (rsync/rsync project "sample/" "heroku"))
+    (do
+      (deploy/deploy project "clojars")
+      (rsync/rsync project "sample/" "heroku"))
 
     #"(?i)release"
     (do
