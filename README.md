@@ -1,6 +1,6 @@
 # pedestal-swagger
 
-[![Build status](https://circleci.com/gh/frankiesardo/lab.svg?style=shield)](https://circleci.com/gh/frankiesardo/lab) [![Dependencies Status](http://jarkeeper.com/frankiesardo/pedestal-swagger/status.png)](http://jarkeeper.com/frankiesardo/pedestal-swagger)
+[![Build status](https://circleci.com/gh/frankiesardo/pedestal-swagger.svg?style=shield)](https://circleci.com/gh/frankiesardo/pedestal-swagger) [![Dependencies Status](http://jarkeeper.com/frankiesardo/pedestal-swagger/status.png)](http://jarkeeper.com/frankiesardo/pedestal-swagger)
 
 Generate Swagger documentation from pedestal routes
 
