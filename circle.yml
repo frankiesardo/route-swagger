@@ -1,5 +1,5 @@
 deployment:
   production:
     branch: heroku
-    heroku:
-      appname: pedestal-swagger
+    commands:
+      - git push git@heroku.com:pedestal-swagger.git
