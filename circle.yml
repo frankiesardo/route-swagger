@@ -2,4 +2,4 @@ deployment:
   production:
     branch: heroku
     commands:
-      - git push git@heroku.com:pedestal-swagger.git
+      - git push -f git@heroku.com:pedestal-swagger.git $CIRCLE_SHA1:refs/heads/master
