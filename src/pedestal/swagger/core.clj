@@ -2,12 +2,12 @@
   (:require [pedestal.swagger.doc :as doc]
             [pedestal.swagger.schema :as schema]
             [io.pedestal.http.route.definition :refer [expand-routes]]
-            [io.pedestal.interceptor :as interceptor]
+            [io.pedestal.interceptor.helpers :as ih]
             [ring.util.response :refer [response resource-response redirect]]
             [ring.swagger.swagger2 :as spec]
             [ring.util.http-status :as status]))
 
-(interceptor/definterceptorfn swagger-doc
+(defn swagger-doc
   "Creates an interceptor that serves the generated documentation on
    the path fo your choice.  Accepts an optional function f that takes
    the swagger-object and returns a ring response."
@@ -18,19 +18,19 @@
                     {:default-response-description-fn
                      #(get-in status/status [% :description] "")})))))
   ([f]
-   (interceptor/before
+   (ih/before
     ::doc/swagger-doc
     (fn [{:keys [route] :as context}]
       (assoc context :response (f (-> route meta ::doc/swagger-doc)))))))
 
-(interceptor/definterceptorfn swagger-ui
+(defn swagger-ui
   "Creates an interceptor that serves the swagger ui on a path of your
   choice. Note that the path MUST specify a splat argument named
   \"resource\" e.g. \"my-path/*resource\". Acceps additional options
   used to construct the swagger-object url (such as :app-name
   :your-app-name), using pedestal's 'path-for'."
   [& path-opts]
-  (interceptor/handler
+  (ih/handler
    ::doc/swagger-ui
    (fn [{:keys [path-params path-info url-for] :as request}]
      (let [res (:resource path-params)]
@@ -41,7 +41,7 @@
                                   "\"};"))
          (resource-response res {:root "swagger-ui/"}))))))
 
-(interceptor/definterceptorfn coerce-params
+(defn coerce-params
   "Creates an interceptor that coerces the params for the selected
   route, according to the route's swagger documentation. A coercion
   function f that acceps the route params schema and a context and return a
@@ -52,14 +52,14 @@
   ([] (coerce-params schema/?bad-request))
   ([f]
    (with-meta
-     (interceptor/before
-      (fn [{:keys [request route] :as context}]
+     (ih/before
+      (fn [{:keys [route] :as context}]
         (if-let [schema (->> route meta ::doc/doc :parameters)]
           (f schema context)
           context)))
      {::doc/doc {:responses {400 {}}}})))
 
-(interceptor/definterceptorfn validate-response
+(defn validate-response
   "Creates an interceptor that validates the response for the selected
   route, according to the route's swagger documentation. A validation
   function f that accepts the route response schema and a context and
@@ -70,7 +70,7 @@
   ([] (validate-response schema/?internal-server-error))
   ([f]
    (with-meta
-     (interceptor/after
+     (ih/after
       (fn [{:keys [response route] :as context}]
         (if-let [schemas (->> route meta ::doc/doc :responses)]
           (if-let [schema (or (schemas (:status response))
@@ -82,7 +82,7 @@
 
 ;; Very useful interceptors
 
-(interceptor/definterceptorfn body-params
+(defn body-params
   "Creates an interceptor that will merge the supplied request submaps
   in a single :body-params submaps. This is usually declared after
   'io.pedestal.http.body-params/body-params', so while the first will
@@ -93,19 +93,19 @@
   :transit-params."
   ([] (body-params :json-params :edn-params :transit-params))
   ([& ks]
-     (interceptor/on-request
+     (ih/on-request
       ::body-params
       (fn [request]
         (->> (map (partial get request) ks)
              (apply merge)
              (assoc request :body-params))))))
 
-(interceptor/definterceptorfn keywordize-params
+(defn keywordize-params
   "Creates an interceptor that keywordize the parameters map under the
   specified keys e.g. if you supply :form-params it will keywordize
   the keys in the request submap under :form-params."
   [& ks]
-  (interceptor/on-request
+  (ih/on-request
    ::keywordize-params
    (fn [request]
      (->> (map (partial get request) ks)
@@ -120,7 +120,7 @@
   it simple to attach a meta tag holding the interceptor swagger
   documentation."
   [name doc args & body]
-  `(def ~name (with-meta (interceptor/handler (fn ~args ~@body))
+  `(def ~name (with-meta (ih/handler (fn ~args ~@body))
                 {::doc/doc ~doc})))
 
 (defmacro defmiddleware
@@ -130,7 +130,7 @@
   [name doc before after]
   (let [f1 (cons 'fn before)
         f2 (cons 'fn after)]
-    `(def ~name (with-meta (interceptor/middleware ~f1 ~f2)
+    `(def ~name (with-meta (ih/middleware ~f1 ~f2)
                   {::doc/doc ~doc}))))
 
 (defmacro defon-request
@@ -138,7 +138,7 @@
   it simple to attach a meta tag holding the interceptor swagger
   documentation."
   [name doc args & body]
-  `(def ~name (with-meta (interceptor/on-request (fn ~args ~@body))
+  `(def ~name (with-meta (ih/on-request (fn ~args ~@body))
                 {::doc/doc ~doc})))
 
 (defmacro defon-response
@@ -146,7 +146,7 @@
   it simple to attach a meta tag holding the interceptor swagger
   documentation."
   [name doc args & body]
-  `(def ~name (with-meta (interceptor/on-response (fn ~args ~@body))
+  `(def ~name (with-meta (ih/on-response (fn ~args ~@body))
                 {::doc/doc ~doc})))
 
 (defmacro defaround
@@ -156,7 +156,7 @@
   [name doc before after]
   (let [f1 (cons 'fn before)
         f2 (cons 'fn after)]
-    `(def ~name (with-meta (interceptor/around ~f1 ~f2)
+    `(def ~name (with-meta (ih/around ~f1 ~f2)
                   {::doc/doc ~doc}))))
 
 (defmacro defbefore
@@ -164,7 +164,7 @@
   it simple to attach a meta tag holding the interceptor swagger
   documentation."
   [name doc args & body]
-  `(def ~name (with-meta (interceptor/before (fn ~args ~@body))
+  `(def ~name (with-meta (ih/before (fn ~args ~@body))
                 {::doc/doc ~doc})))
 
 (defmacro defafter
@@ -172,10 +172,8 @@
   it simple to attach a meta tag holding the interceptor swagger
   documentation."
   [name doc args & body]
-  `(def ~name (with-meta (interceptor/after (fn ~args ~@body))
+  `(def ~name (with-meta (ih/after (fn ~args ~@body))
                 {::doc/doc ~doc})))
-
-;;
 
 (defmacro defroutes
   "A drop-in replacement for pedestal's defroutes.  In addition to
