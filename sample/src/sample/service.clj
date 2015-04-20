@@ -215,7 +215,7 @@
        ;["/secure" ^:interceptors [basic-auth] {:delete delete-db}]
 
        ["/doc" {:get [(swagger/swagger-doc)]}]
-       ["/*resource" {:get [(swagger/swagger-ui)]}]]]]))
+       ["/swagger-ui/*resource" {:get [(swagger/swagger-ui)]}]]]]))
 
 (def service {:env :prod
               ::bootstrap/routes routes
