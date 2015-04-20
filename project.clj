@@ -3,9 +3,16 @@
   :url "http://github.com/frankiesardo/pedestal-swagger"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :plugins [[codox "0.8.11"]]
-  :codox {:src-dir-uri "http://github.com/frankiesardo/pedestal-swagger/blob/master/"
-          :src-linenum-anchor-prefix "L"}
+  ;:plugins [[codox "0.8.11"]]
+  ;:codox {:src-dir-uri "http://github.com/frankiesardo/pedestal-swagger/blob/master/"
+  ;        :src-linenum-anchor-prefix "L"}
+
+  :plugins [[s3-wagon-private "1.1.2"]]
+
+  :repositories  [["nu-maven" {:url "s3p://nu-maven/releases/"
+                               :username [:gpg :env/artifacts_aws_access_key_id]
+                               :passphrase [:gpg :env/artifacts_aws_secret_access_key]}]]
+
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [io.pedestal/pedestal.service "0.4.0"]
                  [metosin/ring-swagger "0.19.5"]

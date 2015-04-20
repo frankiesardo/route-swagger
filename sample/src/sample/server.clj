@@ -3,7 +3,6 @@
   (:require [sample.service :as service]
             [io.pedestal.http :as bootstrap]))
 
-
 (defonce service-instance nil)
 
 (defn create-server
