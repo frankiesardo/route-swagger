@@ -69,7 +69,7 @@
                          (coerce-params) (validate-response)
                          auth-middleware]
      {:get get-handler}
-     ["/:id" ^:interceptors [id-middleware]
+     ["/x/:id" ^:interceptors [id-middleware]
       {:put put-handler
        :delete delete-handler
        :head non-documented-handler}]
@@ -86,7 +86,7 @@
                                      500 {}
                                      :default {:schema {:result [s/Str]}
                                                :headers {(req "Location") s/Str}}}}}
-                  "/:id"
+                  "/x/:id"
                   {:put {:description "Requires id on path"
                          :summary "Put resource with id"
                          :parameters {:path {:id s/Int}
@@ -101,32 +101,33 @@
                             :responses {400 {} 500 {}}}}}]
     (is (= expected (doc/doc-routes routes)))))
 
-(def app (make-app {::bootstrap/routes (doc/inject-docs
+(def app (make-app {::bootstrap/router :prefix-tree ;; or :linear-search
+                    ::bootstrap/routes (doc/inject-docs
                                         {:title "Test"
                                          :version "0.1"} routes)}))
 
 (deftest coerces-params
   (are [resp req] (= resp (read-string (:body req)))
        {:params {:auth "y", :id 1, :notify true}}
-       (response-for app :delete "http://t/1?notify=true" :headers {"Auth" "y"})
+       (response-for app :delete "http://t/x/1?notify=true" :headers {"Auth" "y"})
 
        {:error {:headers {:auth "missing-required-key"}}}
-       (response-for app :delete "http://t/1?notify=true")
+       (response-for app :delete "http://t/x/1?notify=true")
 
        {:error {:query-params {:notify "missing-required-key"}}}
-       (response-for app :delete "http://t/1" :headers {"Auth" "y"})
+       (response-for app :delete "http://t/x/1" :headers {"Auth" "y"})
 
        {:error {:path-params {:id "(not (integer? W))"}}}
-       (response-for app :delete "http://t/W?notify=true" :headers {"Auth" "y"})
+       (response-for app :delete "http://t/x/W?notify=true" :headers {"Auth" "y"})
 
        {:error {:body-params {:name "(not (keyword? 3))"}}}
-       (response-for app :put "http://t/1"
+       (response-for app :put "http://t/x/1"
                      :headers {"Auth" "y"
                                "Content-Type" "application/edn"}
                      :body (pr-str {:name 3}))
 
        {:params {:auth "y", :id 1, :name :foo}}
-       (response-for app :put "http://t/1"
+       (response-for app :put "http://t/x/1"
                      :headers {"Auth" "y"
                                "Content-Type" "application/edn"}
                      :body (pr-str {:name "foo"}))))

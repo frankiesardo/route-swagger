@@ -32,7 +32,7 @@
   [& path-opts]
   (ih/handler
    ::doc/swagger-ui
-   (fn [{:keys [path-params path-info url-for] :as request}]
+   (fn [{:keys [path-params path-info url-for]}]
      (let [res (:resource path-params)]
        (case res
          "" (redirect (str path-info "index.html"))
