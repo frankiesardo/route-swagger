@@ -113,6 +113,13 @@
           (zipmap ks)
           (apply merge (apply dissoc request ks))))))
 
+(defn tag-route
+  "Doesn't do much, useful to tag root paths for Swagger UI."
+  [& tags]
+  (with-meta
+    (ih/before identity)
+    {::doc/doc {:tags tags}}))
+
 ;;;; Pedestal aliases
 
 (defmacro defhandler
