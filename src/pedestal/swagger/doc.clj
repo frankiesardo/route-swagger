@@ -61,9 +61,10 @@
   route. The context passed to each interceptor has a reference to the
   selected route, so information like request and response schemas and
   the swagger object can be retrieved from its meta."
-  [info route-table]
-  (let [swagger-object {:swagger "2.0"
-                        :info (merge {:title "Swagger API" :version "0.0.1"}
-                                     info)
-                        :paths (doc-routes route-table)}]
+  [docs route-table]
+  (let [swagger-object (deep-merge {:swagger "2.0"
+                                    :info {:title "Swagger API"
+                                           :version "0.0.1"}
+                                    :paths (doc-routes route-table)}
+                                   docs)]
     (inject-swagger-into-routes route-table swagger-object)))
