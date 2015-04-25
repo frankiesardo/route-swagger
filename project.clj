@@ -20,4 +20,6 @@
                   ["change" "version" "leiningen.release/bump-version"]
                   ["vcs" "commit"]
                   ["vcs" "push"]]
-  :profiles {:dev {:dependencies [[io.pedestal/pedestal.jetty "0.3.1"]]}})
+  :profiles {:dev {:dependencies
+                   [[io.pedestal/pedestal.jetty "0.3.1"]
+                    [metosin/scjsv "0.2.0" :exclusions [org.clojure/core.async]]]}})
