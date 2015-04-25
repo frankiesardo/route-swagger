@@ -44,7 +44,7 @@
 (s/defschema Paths
   {s/Str {s/Keyword spec/Operation}})
 
-(s/defn doc-routes :- Paths
+(s/defn gen-paths :- Paths
   "Generates swagger paths from an expanded route table.
   This function can also be used to generate documentation
   offline or for easy debugging (turning schema checks on)."
@@ -65,6 +65,6 @@
   (let [swagger-object (deep-merge {:swagger "2.0"
                                     :info {:title "Swagger API"
                                            :version "0.0.1"}
-                                    :paths (doc-routes route-table)}
+                                    :paths (gen-paths route-table)}
                                    docs)]
     (inject-swagger-into-routes route-table swagger-object)))

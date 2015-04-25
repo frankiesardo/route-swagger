@@ -76,34 +76,36 @@
      ["/doc" {:get [(swagger-doc)]}]]]])
 
 (deftest generates-correct-documentation
-  (let [expected {"/"
-                  {:get {:description "Requires auth as header"
-                         :summary "Get all resources"
-                         :parameters {:query {:q s/Str}
-                                      :header {:auth s/Str}}
-                         :responses {200 {:schema {:status s/Str}}
-                                     400 {}
-                                     500 {}
-                                     :default {:schema {:result [s/Str]}
-                                               :headers {(req "Location") s/Str}}}}}
-                  "/:id"
-                  {:put {:description "Requires id on path"
-                         :summary "Put resource with id"
-                         :parameters {:path {:id s/Int}
-                                      :header {:auth s/Str}
-                                      :body {:name s/Keyword}}
-                         :responses {400 {} 500 {}}}
-                   :delete {:description "Requires id on path"
-                            :summary "Delete resource with id"
-                            :parameters {:path {:id s/Int}
-                                         :header {:auth s/Str}
-                                         :query {:notify s/Bool}}
-                            :responses {400 {} 500 {}}}}}]
-    (is (= expected (doc/doc-routes routes)))))
+  (let [paths {"/" {:get
+                    {:description "Requires auth as header"
+                     :summary "Get all resources"
+                     :parameters {:query {:q s/Str}
+                                  :header {:auth s/Str}}
+                     :responses {200 {:schema {:status s/Str}}
+                                 400 {}
+                                 500 {}
+                                 :default {:schema {:result [s/Str]}
+                                           :headers {(req "Location") s/Str}}}}}
+               "/:id" {:put
+                       {:description "Requires id on path"
+                        :summary "Put resource with id"
+                        :parameters {:path {:id s/Int}
+                                     :header {:auth s/Str}
+                                     :body {:name s/Keyword}}
+                        :responses {400 {} 500 {}}}
+                       :delete
+                       {:description "Requires id on path"
+                        :summary "Delete resource with id"
+                        :parameters {:path {:id s/Int}
+                                     :header {:auth s/Str}
+                                     :query {:notify s/Bool}}
+                        :responses {400 {}
+                                    500 {}}}}}]
+    (is (= paths (doc/gen-paths routes)))))
 
-(def app (make-app {::bootstrap/routes (doc/inject-docs
-                                        {:title "Test"
-                                         :version "0.1"} routes)}))
+(def app (make-app {::bootstrap/routes
+                    (doc/inject-docs {:info {:title "Test"
+                                             :version "0.1"}} routes)}))
 
 (deftest coerces-params
   (are [resp req] (= resp (read-string (:body req)))
