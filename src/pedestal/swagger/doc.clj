@@ -55,7 +55,7 @@
            {path {method (apply deep-merge docs)}})))
 
 
-(s/defn inject-docs :- spec/Swagger
+(s/defn inject-docs
   "Attaches swagger information as a meta key to each documented
   route. The context passed to each interceptor has a reference to the
   selected route, so information like request and response schemas and
