@@ -1,6 +1,5 @@
  (ns pedestal.swagger.doc
-  (:require [io.pedestal.http.route :as route]
-            [ring.swagger.swagger2-schema :as spec]
+  (:require [ring.swagger.swagger2-schema :as spec]
             [schema.core :as s]))
 
 (defn- deep-merge-with
@@ -25,7 +24,7 @@
 (defn- swagger-doc-route? [route]
   (when (= ::swagger-doc (:route-name route)) route))
 
-(defn- find-docs [{:keys [interceptors] :as route}]
+(defn- find-docs [{:keys [interceptors]}]
   (keep (comp ::doc meta) interceptors))
 
 (defn- inject-swagger-into-routes [route-table swagger-object]
