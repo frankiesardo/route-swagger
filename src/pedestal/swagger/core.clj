@@ -2,7 +2,7 @@
   (:require [pedestal.swagger.doc :as doc]
             [pedestal.swagger.schema :as schema]
             [io.pedestal.http.route.definition :refer [expand-routes]]
-            [io.pedestal.interceptor.helpers :as ih]
+            [io.pedestal.interceptor.helpers :as interceptor]
             [ring.util.response :refer [response resource-response redirect]]
             [ring.swagger.swagger2 :as spec]
             [ring.util.http-status :as status]))
@@ -18,7 +18,7 @@
                     {:default-response-description-fn
                      #(get-in status/status [% :description] "")})))))
   ([f]
-   (ih/before
+   (interceptor/before
     ::doc/swagger-doc
     (fn [{:keys [route] :as context}]
       (assoc context :response (f (-> route meta ::doc/swagger-doc)))))))
@@ -30,7 +30,7 @@
   used to construct the swagger-object url (such as :app-name
   :your-app-name), using pedestal's 'path-for'."
   [& path-opts]
-  (ih/handler
+  (interceptor/handler
    ::doc/swagger-ui
    (fn [{:keys [path-params path-info url-for]}]
      (let [res (:resource path-params)]
@@ -52,7 +52,7 @@
   ([] (coerce-params schema/?bad-request))
   ([f]
    (with-meta
-     (ih/before
+     (interceptor/before
       (fn [{:keys [route] :as context}]
         (if-let [schema (->> route meta ::doc/doc :parameters)]
           (f schema context)
@@ -70,7 +70,7 @@
   ([] (validate-response schema/?internal-server-error))
   ([f]
    (with-meta
-     (ih/after
+     (interceptor/after
       (fn [{:keys [response route] :as context}]
         (if-let [schemas (->> route meta ::doc/doc :responses)]
           (if-let [schema (or (schemas (:status response))
@@ -93,7 +93,7 @@
   :transit-params."
   ([] (body-params :json-params :edn-params :transit-params))
   ([& ks]
-     (ih/on-request
+     (interceptor/on-request
       ::body-params
       (fn [request]
         (->> (map (partial get request) ks)
@@ -105,7 +105,7 @@
   specified keys e.g. if you supply :form-params it will keywordize
   the keys in the request submap under :form-params."
   [& ks]
-  (ih/on-request
+  (interceptor/on-request
    ::keywordize-params
    (fn [request]
      (->> (map (partial get request) ks)
@@ -117,7 +117,7 @@
   "Doesn't do much, useful to tag root paths for Swagger UI."
   [& tags]
   (with-meta
-    (ih/before identity)
+    (interceptor/before identity)
     {::doc/doc {:tags tags}}))
 
 ;;;; Pedestal aliases
@@ -127,7 +127,7 @@
   it simple to attach a meta tag holding the interceptor swagger
   documentation."
   [name doc args & body]
-  `(def ~name (with-meta (ih/handler (fn ~args ~@body))
+  `(def ~name (with-meta (interceptor/handler (fn ~args ~@body))
                 {::doc/doc ~doc})))
 
 (defmacro defmiddleware
@@ -137,7 +137,7 @@
   [name doc before after]
   (let [f1 (cons 'fn before)
         f2 (cons 'fn after)]
-    `(def ~name (with-meta (ih/middleware ~f1 ~f2)
+    `(def ~name (with-meta (interceptor/middleware ~f1 ~f2)
                   {::doc/doc ~doc}))))
 
 (defmacro defon-request
@@ -145,7 +145,7 @@
   it simple to attach a meta tag holding the interceptor swagger
   documentation."
   [name doc args & body]
-  `(def ~name (with-meta (ih/on-request (fn ~args ~@body))
+  `(def ~name (with-meta (interceptor/on-request (fn ~args ~@body))
                 {::doc/doc ~doc})))
 
 (defmacro defon-response
@@ -153,7 +153,7 @@
   it simple to attach a meta tag holding the interceptor swagger
   documentation."
   [name doc args & body]
-  `(def ~name (with-meta (ih/on-response (fn ~args ~@body))
+  `(def ~name (with-meta (interceptor/on-response (fn ~args ~@body))
                 {::doc/doc ~doc})))
 
 (defmacro defaround
@@ -163,7 +163,7 @@
   [name doc before after]
   (let [f1 (cons 'fn before)
         f2 (cons 'fn after)]
-    `(def ~name (with-meta (ih/around ~f1 ~f2)
+    `(def ~name (with-meta (interceptor/around ~f1 ~f2)
                   {::doc/doc ~doc}))))
 
 (defmacro defbefore
@@ -171,7 +171,7 @@
   it simple to attach a meta tag holding the interceptor swagger
   documentation."
   [name doc args & body]
-  `(def ~name (with-meta (ih/before (fn ~args ~@body))
+  `(def ~name (with-meta (interceptor/before (fn ~args ~@body))
                 {::doc/doc ~doc})))
 
 (defmacro defafter
@@ -179,7 +179,7 @@
   it simple to attach a meta tag holding the interceptor swagger
   documentation."
   [name doc args & body]
-  `(def ~name (with-meta (ih/after (fn ~args ~@body))
+  `(def ~name (with-meta (interceptor/after (fn ~args ~@body))
                 {::doc/doc ~doc})))
 
 (defmacro defroutes
