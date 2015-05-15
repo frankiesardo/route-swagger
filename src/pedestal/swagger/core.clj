@@ -93,12 +93,12 @@
   :transit-params."
   ([] (body-params :json-params :edn-params :transit-params))
   ([& ks]
-     (interceptor/on-request
-      ::body-params
-      (fn [request]
-        (->> (map (partial get request) ks)
-             (apply merge)
-             (assoc request :body-params))))))
+   (interceptor/on-request
+    ::body-params
+    (fn [request]
+      (->> request
+           ((apply some-fn ks))
+           (assoc request :body-params))))))
 
 (defn keywordize-params
   "Creates an interceptor that keywordize the parameters map under the
