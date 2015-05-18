@@ -221,10 +221,11 @@
        ["/secure" ^:interceptors [basic-auth] {:delete delete-db}]
 
        ["/doc" {:get [(swagger/swagger-doc)]}]
-       ["/swagger-ui/*resource" {:get [(swagger/swagger-ui)]}]]]]))
+       ["/*resource" {:get [(swagger/swagger-ui)]}]]]]))
 
 (def service {:env :prod
               ::bootstrap/routes routes
+              ::bootstrap/router :linear-search
               ::bootstrap/resource-path "/public"
               ::bootstrap/type :jetty
               ::bootstrap/port port})
