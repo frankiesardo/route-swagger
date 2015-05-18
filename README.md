@@ -10,4 +10,4 @@ https://pedestal-swagger.herokuapp.com/index.html
 
     lein run
     
-In a browser, visit http://localhost:8080/pets
+In a browser, visit http://localhost:8080
