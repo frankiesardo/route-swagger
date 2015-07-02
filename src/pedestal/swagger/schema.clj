@@ -28,11 +28,11 @@
   (assoc schema s/Any s/Any))
 
 (def ^:private schema->param
-  {:body    :body-params
-   :form    :form-params
-   :path    :path-params
-   :query   :query-params
-   :header  :headers})
+  {:body     :body-params
+   :formData :form-params
+   :path     :path-params
+   :query    :query-params
+   :header   :headers})
 
 (def ^:private loose-schema?
   #{:query :header})
