@@ -4,11 +4,9 @@
             [schema.core :as s]
             [io.pedestal.http.route.definition :refer [expand-routes]]
             [io.pedestal.interceptor.helpers :as interceptor]
-            [ring.swagger.swagger2-schema :refer [Operation]]
             [ring.util.response :refer [response resource-response redirect]]
             [ring.swagger.swagger2 :as spec]
-            [ring.util.http-status :as status])
-  (:import [io.pedestal.interceptor Interceptor]))
+            [ring.util.http-status :as status]))
 
 (defn swagger-doc
   "Creates an interceptor that serves the generated documentation on
@@ -44,15 +42,6 @@
                                   "\"};"))
          (resource-response res {:root "swagger-ui/"}))))))
 
-(s/defn annotate :- Interceptor
-  "Attaches swagger documentation to a pedestal interceptor."
-  [doc :- Operation interceptor :- Interceptor]
-  (vary-meta interceptor assoc ::doc doc))
-
-(def extract
-  "Gets documentation from an annotated object"
-  (comp ::doc meta))
-
 (defn coerce-params
   "Creates an interceptor that coerces the params for the selected
   route, according to the route's swagger documentation. A coercion
@@ -63,11 +52,11 @@
   consult 'pedestal.swagger.schema/?bad-request'."
   ([] (coerce-params schema/?bad-request))
   ([f]
-   (annotate
+   (doc/annotate
     {:responses {400 {}}}
      (interceptor/before
       (fn [{:keys [route] :as context}]
-        (if-let [schema (->> route extract :parameters)]
+        (if-let [schema (->> route doc/annotation :parameters)]
           (f schema context)
           context))))))
 
@@ -81,11 +70,11 @@
   consult 'pedestal.swagger.schema/?internal-server-error'."
   ([] (validate-response schema/?internal-server-error))
   ([f]
-   (annotate
+   (doc/annotate
     {:responses {500 {}}}
      (interceptor/after
       (fn [{:keys [response route] :as context}]
-        (if-let [schemas (->> route extract :responses)]
+        (if-let [schemas (->> route doc/annotation :responses)]
           (if-let [schema (or (schemas (:status response))
                               (schemas :default))]
             (f schema context)
@@ -133,7 +122,7 @@
   documentation."
   [name doc args & body]
   `(def ~name
-     (annotate ~doc (interceptor/handler ~name (fn ~args ~@body)))))
+     (doc/annotate ~doc (interceptor/handler (keyword ~name) (fn ~args ~@body)))))
 
 (defmacro defmiddleware
   "A drop-in replacement for pedestal's equivalent interceptor. Makes
@@ -143,7 +132,7 @@
   (let [f1 (cons 'fn before)
         f2 (cons 'fn after)]
     `(def ~name
-       (annotate ~doc (interceptor/middleware ~name ~f1 ~f2)))))
+       (doc/annotate ~doc (interceptor/middleware (keyword ~name) ~f1 ~f2)))))
 
 (defmacro defon-request
   "A drop-in replacement for pedestal's equivalent interceptor. Makes
@@ -151,7 +140,7 @@
   documentation."
   [name doc args & body]
   `(def ~name
-     (annotate ~doc (interceptor/on-request ~name (fn ~args ~@body)))))
+     (doc/annotate ~doc (interceptor/on-request (keyword ~name) (fn ~args ~@body)))))
 
 (defmacro defon-response
   "A drop-in replacement for pedestal's equivalent interceptor. Makes
@@ -159,7 +148,7 @@
   documentation."
   [name doc args & body]
   `(def ~name
-     (annotate ~doc (interceptor/on-response ~name (fn ~args ~@body)))))
+     (doc/annotate ~doc (interceptor/on-response (keyword ~name) (fn ~args ~@body)))))
 
 (defmacro defaround
   "A drop-in replacement for pedestal's equivalent interceptor. Makes
@@ -169,7 +158,7 @@
   (let [f1 (cons 'fn before)
         f2 (cons 'fn after)]
     `(def ~name
-       (annotate ~doc (interceptor/around ~name ~f1 ~f2)))))
+       (doc/annotate ~doc (interceptor/around (keyword ~name) ~f1 ~f2)))))
 
 (defmacro defbefore
   "A drop-in replacement for pedestal's equivalent interceptor. Makes
@@ -177,7 +166,7 @@
   documentation."
   [name doc args & body]
   `(def ~name
-     (annoate ~doc (interceptor/before ~name (fn ~args ~@body)))))
+     (doc/annotate ~doc (interceptor/before (keyword ~name) (fn ~args ~@body)))))
 
 (defmacro defafter
   "A drop-in replacement for pedestal's equivalent interceptor. Makes
@@ -185,7 +174,7 @@
   documentation."
   [name doc args & body]
   `(def ~name
-     (annotate ~doc (interceptor/after ~name (fn ~args ~@body)))))
+     (doc/annotate ~doc (interceptor/after (keyword ~name) (fn ~args ~@body)))))
 
 (defmacro defroutes
   "A drop-in replacement for pedestal's defroutes.  In addition to

@@ -1,6 +1,17 @@
  (ns pedestal.swagger.doc
-  (:require [ring.swagger.swagger2-schema :as spec]
-            [schema.core :as s]))
+   (:require [ring.swagger.swagger2-schema :as spec]
+             [schema.core :as s]))
+
+(s/defn annotate
+  "Attaches swagger documentation to an object"
+  [doc :- spec/Operation, obj]
+  (vary-meta obj assoc ::doc doc))
+
+(def annotation
+  "Gets documentation from an annotated object"
+  (comp ::doc meta))
+
+;;
 
 (defn- deep-merge-with
   "Like merge-with, but merges maps recursively, applying the given fn
@@ -25,7 +36,7 @@
   (when (= ::swagger-doc (:route-name route)) route))
 
 (defn- find-docs [{:keys [interceptors]}]
-  (keep (comp ::doc meta) interceptors))
+  (keep annotation interceptors))
 
 (defn- inject-swagger-into-routes [route-table swagger-object]
   (for [route route-table]
@@ -34,11 +45,11 @@
             (vary-meta route assoc ::swagger-doc swagger-object)
             route)
           (if-let [docs (seq (find-docs route))]
-            (vary-meta route assoc ::doc (apply deep-merge docs))
+            (annotate (apply deep-merge docs) route)
             route))))
 
 (defn- documented-handler? [route]
-  (-> route :interceptors last meta ::doc))
+  (-> route :interceptors last annotation))
 
 (s/defschema Paths
   {s/Str {s/Keyword spec/Operation}})

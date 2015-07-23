@@ -70,7 +70,7 @@
     (validator json)
     (response json)))
 
- (definition/defroutes routes
+(definition/defroutes routes
   [["t" :test
     ["/" ^:interceptors [(pedestal-body-params/body-params)
                          (keywordize-params :headers) (body-params)
