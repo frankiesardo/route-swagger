@@ -32,6 +32,8 @@
   "Deep merge where the last colliding value overrides the others."
   (partial deep-merge-with (fn [& args] (last args))))
 
+;;
+
 (defn- swagger-doc-route? [route]
   (when (= ::swagger-doc (:route-name route)) route))
 

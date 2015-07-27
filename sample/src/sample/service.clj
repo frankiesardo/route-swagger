@@ -1,10 +1,13 @@
 (ns sample.service
-  (:require [pedestal.swagger.core :as swagger]
+  (:require [pedestal.swagger.core :as sw]
+            [pedestal.swagger.doc :as sw.doc]
             [io.pedestal.http :as bootstrap]
             [io.pedestal.http.route :as route]
             [io.pedestal.http.body-params :as body-params]
             [io.pedestal.impl.interceptor :refer [terminate]]
-            [ring.util.response :refer [response not-found created]]
+            [io.pedestal.interceptor.helpers :as interceptor]
+            [ring.util.http-response :as resp]
+            [ring.util.http-status :as status]
             [ring.util.codec :as codec]
             [schema.core :as s]))
 
@@ -64,129 +67,134 @@
 
 (def pet-store (atom {}))
 
-(swagger/defhandler get-all-pets
+(sw/defhandler get-all-pets
   {:summary "Get all pets in the store"
-   :responses {200 {:schema PetList}}}
+   :responses {status/ok {:schema PetList}}}
   [_]
-  (response (let [pets (vals (:pets @pet-store))]
+  (resp/ok (let [pets (vals (:pets @pet-store))]
               {:total (count pets)
                :pets (or pets [])})))
 
-(swagger/defhandler add-pet
+(sw/defhandler add-pet
   {:summary "Add a new pet to the store"
    :parameters {:body Pet}
-   :responses {201 {:headers {(s/required-key "Location") s/Str}}}}
+   :responses {status/created
+               {:headers {(req "Location") s/Str}}}}
   [{:keys [body-params] :as req}]
   (swap! pet-store assoc-in [:pets (:id body-params)] body-params)
-  (created (route/url-for ::get-pet-by-id :params {:id (:id body-params)}) ""))
+  (resp/created (route/url-for ::get-pet-by-id :params {:id (:id body-params)})))
 
-(swagger/defbefore load-pet-from-db
+(sw/defbefore load-pet-from-db
   {:description "Assumes a pet exists with given ID"
    :parameters {:path {:id s/Int}}
-   :responses {404 {}}}
+   :responses {status/not-found {}}}
   [{:keys [request response] :as context}]
   (if-let [pet (get-in @pet-store [:pets (-> request :path-params :id)])]
     (assoc-in context [:request ::pet] pet)
     (-> context
         terminate
-        (assoc-in [:response] (not-found "Pet not found")))))
+        (assoc-in [:response] (resp/not-found "Pet not found")))))
 
-(swagger/defhandler get-pet-by-id
+(sw/defhandler get-pet-by-id
   {:summary "Find pet by ID"
    :description "Returns a pet based on ID"
-   :responses {200 {:schema Pet}}}
+   :responses {status/ok {:schema Pet}}}
   [{:keys [::pet] :as req}]
-  (response pet))
+  (resp/ok pet))
 
-(swagger/defhandler update-pet
+(sw/defhandler update-pet
   {:summary "Update an existing pet"
    :parameters {:body Pet}}
   [{:keys [path-params body-params] :as req}]
   (swap! pet-store assoc-in [:pets (:id path-params)] body-params)
-  (response "OK"))
+  (resp/ok "OK"))
 
-(swagger/defhandler update-pet-with-form
+(sw/defhandler update-pet-with-form
   {:summary "Updates a pet in the store with form data"
    :parameters {:formData PartialPet}}
   [{:keys [path-params form-params] :as req}]
   (swap! pet-store update-in [:pets (:id path-params)] merge form-params)
-  (response "OK"))
+  (resp/ok "OK"))
 
 ;
 
-(swagger/defhandler add-user
+(sw/defhandler add-user
   {:summary "Create user"
    :parameters {:body User}
-   :responses {201 {:headers {(s/required-key "Location") s/Str}}}}
+   :responses {status/created
+               {:headers {(req "Location") s/Str}}}}
   [{:keys [body-params] :as req}]
   (swap! pet-store assoc-in [:users (:username body-params)] body-params)
-  (created (route/url-for ::get-user-by-name :params {:username (:username body-params)}) ""))
+  (resp/created (route/url-for ::get-user-by-name :params {:username (:username body-params)})))
 
-(swagger/defhandler get-user-by-name
+(sw/defhandler get-user-by-name
   {:summary "Get user by name"
    :parameters {:path {:username s/Str}}
-   :responses {200 {:schema User}
-               404 {}}}
+   :responses {status/ok {:schema User}
+               status/not-found {}}}
   [{:keys [path-params] :as req}]
   (if-let [user (get-in @pet-store [:users (:username path-params)])]
-    (response user)
-    (not-found "User not found")))
+    (resp/ok user)
+    (resp/not-found "User not found")))
 
 ;
 
-(swagger/defhandler add-order
+(sw/defhandler add-order
   {:summary "Create order"
    :parameters {:body NewOrder}
-   :responses {201 {:headers {(s/required-key "Location") s/Str}}}}
+   :responses {status/created
+               {:headers {(req "Location") s/Str}}}}
   [{:keys [body-params] :as req}]
   (let [id (rand-int 1000000)
         store (swap! pet-store assoc-in [:orders id] (assoc body-params :id id))]
-    (created (route/url-for ::get-order-by-id :params {:id id}) "")))
+    (resp/created (route/url-for ::get-order-by-id :params {:id id}))))
 
-(swagger/defbefore load-order-from-db
+(sw/defbefore load-order-from-db
   {:description "Assumes an order exists with given ID"
    :parameters {:path {:id s/Int}}
-   :responses {404 {}}}
+   :responses {resp/not-found {}}}
   [{:keys [request response] :as context}]
   (if-let [order (get-in @pet-store [:orders (-> request :path-params :id)])]
     (assoc-in context [:request ::order] order)
     (-> context
         terminate
-        (assoc-in [:response] (not-found "Order not found")))))
+        (assoc-in [:response] (resp/not-found "Order not found")))))
 
-(swagger/defhandler get-order-by-id
+(sw/defhandler get-order-by-id
   {:summary "Get user by name"
-   :responses {200 {:schema Order}}}
+   :responses {status/ok {:schema Order}}}
   [{:keys [::order] :as req}]
-  (response (assoc order :status "Pending" :ship-date (java.util.Date.))))
+  (resp/ok (assoc order :status "Pending" :ship-date (java.util.Date.))))
 
 ;
 
-(swagger/defbefore basic-auth
+(sw/defbefore basic-auth
   {:description "Check basic auth credentials"
    :security {"basic" []}
-   :responses {403 {}}}
+   :responses {status/unauthorized {}}}
   [{:keys [request response] :as context}]
   (let [auth (get-in request [:headers :authorization])]
     (if-not (= auth (str "Basic " (codec/base64-encode (.getBytes "foo:bar"))))
       (-> context
           terminate
-          (assoc-in [:response] {:status 403}))
+          (assoc-in [:response] (resp/unauthorized)))
       context)))
 
-(swagger/defhandler delete-db
+(sw/defhandler delete-db
   {:summary "Delete db"}
   [_]
   (reset! pet-store {})
-  {:status 204})
+  (resp/no-content))
 
 ;;;; Routes
 
-
-(def port (Integer. (or (System/getenv "PORT") 8080)))
+(defn annotate
+  "Adds metatata m to a swagger route"
+  [m]
+  (sw.doc/annotate m (interceptor/before ::annotate identity)))
 
 (s/with-fn-validation ;; Optional, but nice to have at compile time
-  (swagger/defroutes routes
+  (sw/defroutes routes
     {:info {:title "Swagger Sample App"
             :description "This is a sample Petstore server."
             :version "2.0"}
@@ -198,11 +206,11 @@
              :description "Operations about orders"}]}
     [[["/" ^:interceptors [(body-params/body-params)
                            bootstrap/json-body
-                           (swagger/body-params)
-                           (swagger/keywordize-params :form-params :headers)
-                           (swagger/coerce-params)
-                           (swagger/validate-response)]
-       ["/pets" ^:interceptors [(swagger/tag-route "pets")]
+                           (sw/body-params)
+                           (sw/keywordize-params :form-params :headers)
+                           (sw/coerce-params)
+                           (sw/validate-response)]
+       ["/pets" ^:interceptors [(annotate {:tags ["pets"]})]
         {:get get-all-pets}
         {:post add-pet}
         ["/:id" ^:interceptors [load-pet-from-db]
@@ -213,19 +221,19 @@
         {:post add-user}
         ["/:username"
          {:get get-user-by-name}]]
-       ["/orders" ^:interceptors [(swagger/tag-route "orders")]
+       ["/orders" ^:interceptors [(annotate {:tags ["orders"]})]
         {:post add-order}
         ["/:id" ^:interceptors [load-order-from-db]
          {:get get-order-by-id}]]
 
        ["/secure" ^:interceptors [basic-auth] {:delete delete-db}]
 
-       ["/doc" {:get [(swagger/swagger-doc)]}]
-       ["/*resource" {:get [(swagger/swagger-ui)]}]]]]))
+       ["/doc" {:get [(sw/swagger-doc)]}]
+       ["/*resource" {:get [(sw/swagger-ui)]}]]]]))
 
 (def service {:env :prod
               ::bootstrap/routes routes
               ::bootstrap/router :linear-search
               ::bootstrap/resource-path "/public"
               ::bootstrap/type :jetty
-              ::bootstrap/port port})
+              ::bootstrap/port (Integer. (or (System/getenv "PORT") 8080))})

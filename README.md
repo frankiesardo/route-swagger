@@ -127,6 +127,12 @@ And finally we want to be able to use the schemas in the documentation to check 
 For a complete example have a look at the `sample` project.
 
 
+## Roadmap
+
+- Support multiple swagger.json and swagger-ui endpoints (e.g. for versioned apis)
+- Content negotiation: documenting `produces` and `consumes`
+- More failures at compile time (tags not in sync, produces/consumes not in sync)
+
 ## License
 
 Copyright © 2014 Frankie Sardo
