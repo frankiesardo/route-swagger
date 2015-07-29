@@ -3,7 +3,6 @@
             [pedestal.swagger.doc :as sw.doc]
             [io.pedestal.http :as bootstrap]
             [io.pedestal.http.route :as route]
-            [io.pedestal.http.body-params :as body-params]
             [io.pedestal.impl.interceptor :refer [terminate]]
             [io.pedestal.interceptor.helpers :as interceptor]
             [ring.util.http-response :as resp]
@@ -61,9 +60,10 @@
     (req :status) s/Str
     (req :ship-date) s/Inst))
 
-;
-
 ;; Store
+
+(defn- created [location]
+  {:status 201 :headers {"Location" location}})
 
 (def pet-store (atom {}))
 
@@ -82,7 +82,7 @@
                {:headers {(req "Location") s/Str}}}}
   [{:keys [body-params] :as req}]
   (swap! pet-store assoc-in [:pets (:id body-params)] body-params)
-  (resp/created (route/url-for ::get-pet-by-id :params {:id (:id body-params)})))
+  (created (route/url-for ::get-pet-by-id :params {:id (:id body-params)})))
 
 (sw/defbefore load-pet-from-db
   {:description "Assumes a pet exists with given ID"
@@ -125,7 +125,7 @@
                {:headers {(req "Location") s/Str}}}}
   [{:keys [body-params] :as req}]
   (swap! pet-store assoc-in [:users (:username body-params)] body-params)
-  (resp/created (route/url-for ::get-user-by-name :params {:username (:username body-params)})))
+  (created (route/url-for ::get-user-by-name :params {:username (:username body-params)})))
 
 (sw/defhandler get-user-by-name
   {:summary "Get user by name"
@@ -147,12 +147,12 @@
   [{:keys [body-params] :as req}]
   (let [id (rand-int 1000000)
         store (swap! pet-store assoc-in [:orders id] (assoc body-params :id id))]
-    (resp/created (route/url-for ::get-order-by-id :params {:id id}))))
+    (created (route/url-for ::get-order-by-id :params {:id id}))))
 
 (sw/defbefore load-order-from-db
   {:description "Assumes an order exists with given ID"
    :parameters {:path {:id s/Int}}
-   :responses {resp/not-found {}}}
+   :responses {status/not-found {}}}
   [{:keys [request response] :as context}]
   (if-let [order (get-in @pet-store [:orders (-> request :path-params :id)])]
     (assoc-in context [:request ::order] order)
@@ -170,10 +170,10 @@
 
 (sw/defbefore basic-auth
   {:description "Check basic auth credentials"
-   :security {"basic" []}
+   ;:security {"basic" []}
    :responses {status/unauthorized {}}}
   [{:keys [request response] :as context}]
-  (let [auth (get-in request [:headers :authorization])]
+  (let [auth (get-in request [:headers "authorization"])]
     (if-not (= auth (str "Basic " (codec/base64-encode (.getBytes "foo:bar"))))
       (-> context
           terminate
@@ -204,11 +204,9 @@
                             :url "http://swagger.io"}}
             {:name "orders"
              :description "Operations about orders"}]}
-    [[["/" ^:interceptors [(body-params/body-params)
-                           bootstrap/json-body
+    [[["/" ^:interceptors [bootstrap/json-body
                            (sw/body-params)
-                           (sw/keywordize-params :form-params :headers)
-                           (sw/coerce-params)
+                           (sw/coerce-request)
                            (sw/validate-response)]
        ["/pets" ^:interceptors [(annotate {:tags ["pets"]})]
         {:get get-all-pets}
@@ -228,7 +226,7 @@
 
        ["/secure" ^:interceptors [basic-auth] {:delete delete-db}]
 
-       ["/doc" {:get [(sw/swagger-doc)]}]
+       ["/swagger.json" {:get [(sw/swagger-json)]}]
        ["/*resource" {:get [(sw/swagger-ui)]}]]]]))
 
 (def service {:env :prod
