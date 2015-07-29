@@ -1,6 +1,7 @@
 (ns pedestal.swagger.core
   (:require [pedestal.swagger.doc :as doc]
             [pedestal.swagger.schema :as schema]
+            [pedestal.swagger.body-params :as body-params]
             [schema.core :as s]
             [io.pedestal.http.route.definition :refer [expand-routes]]
             [io.pedestal.interceptor.helpers :as interceptor]
@@ -81,27 +82,18 @@
             context)
           context))))))
 
-;; Very useful interceptors
+;;;; Pedestal aliases
 
 (defn body-params
-  "Creates an interceptor that will merge the supplied request submaps
-  in a single :body-params submaps. This is usually declared after
-  'io.pedestal.http.body-params/body-params', so while the first will
-  parse the body and assoc it in different submaps (:json-params,
-  :edn-params etc.) this interceptor will make sure that the body
-  params will always be found under :body-params. By default it will
-  merge the request submaps under :json-params, :edn-params and
-  :transit-params."
-  ([] (body-params :json-params :edn-params :transit-params))
-  ([& ks]
-   (interceptor/on-request
-    ::body-params
-    (fn [request]
-      (->> request
-           ((apply some-fn ks))
-           (assoc request :body-params))))))
-
-;;;; Pedestal aliases
+  "An almost drop-in replacement for pedestal's body-params. Accepts a parser map with content-type strings as keys instead of regexes. Ensures the body keys assoc'd into the request are the ones coerce-request expects and keywordize keys by default."
+  ([] (body-params body-params/default-parser-map))
+  ([parser-map]
+   (doc/annotate
+    {:consumes (keys parser-map)}
+    (interceptor/on-request
+     ::body-params
+     (fn [request]
+       (body-params/parse-content-type parser-map request))))))
 
 (defmacro defhandler
   "A drop-in replacement for pedestal's equivalent interceptor. Makes
