@@ -101,19 +101,6 @@
            ((apply some-fn ks))
            (assoc request :body-params))))))
 
-(defn keywordize-params
-  "Creates an interceptor that keywordize the parameters map under the
-  specified keys e.g. if you supply :form-params it will keywordize
-  the keys in the request submap under :form-params."
-  [& ks]
-  (interceptor/on-request
-   ::keywordize-params
-   (fn [request]
-     (->> (map (partial get request) ks)
-          (map #(zipmap (map keyword (keys %)) (vals %)))
-          (zipmap ks)
-          (apply merge (apply dissoc request ks))))))
-
 ;;;; Pedestal aliases
 
 (defmacro defhandler

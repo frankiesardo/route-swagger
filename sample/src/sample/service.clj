@@ -207,7 +207,6 @@
     [[["/" ^:interceptors [(body-params/body-params)
                            bootstrap/json-body
                            (sw/body-params)
-                           (sw/keywordize-params :form-params :headers)
                            (sw/coerce-request)
                            (sw/validate-response)]
        ["/pets" ^:interceptors [(annotate {:tags ["pets"]})]
