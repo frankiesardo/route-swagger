@@ -208,7 +208,7 @@
                            bootstrap/json-body
                            (sw/body-params)
                            (sw/keywordize-params :form-params :headers)
-                           (sw/coerce-params)
+                           (sw/coerce-request)
                            (sw/validate-response)]
        ["/pets" ^:interceptors [(annotate {:tags ["pets"]})]
         {:get get-all-pets}

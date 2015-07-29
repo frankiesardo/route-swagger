@@ -54,7 +54,7 @@
     :query-params {}
     :headers      {}} r))
 
-(defn coerce-params [schema value]
+(defn coerce-request [schema value]
   ((c/coercer (->request-schema schema) c/+string-coercions+)
    (with-request-defaults value)))
 
@@ -62,7 +62,7 @@
   "Terminates the interceptors chain and returns a 400 response if the
   request doesn't match the schema supplied."
   [schema {:keys [request] :as context}]
-  (let [result (coerce-params schema request)]
+  (let [result (coerce-request schema request)]
     (if (u/error? result)
       (assoc (terminate context) :response
              {:status 400 :headers {} :body (explain result)})

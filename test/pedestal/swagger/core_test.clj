@@ -74,7 +74,7 @@
   [["t" :test
     ["/" ^:interceptors [(pedestal-body-params/body-params)
                          (keywordize-params :headers) (body-params)
-                         (coerce-params) (validate-response)
+                         (coerce-request) (validate-response)
                          auth-middleware]
      {:get get-handler}
      ["/x/:id" ^:interceptors [id-middleware]

@@ -117,7 +117,7 @@ And finally we want to be able to use the schemas in the documentation to check 
 
 ```clj
 (swagger/defroutes routes
-  [[["/" ^:interceptors [(swagger/coerce-params) (swagger/validate-response)]
+  [[["/" ^:interceptors [(swagger/coerce-request) (swagger/validate-response)]
       ["/thing/:id" ^:interceptors [load-thing-from-db]
         {:get do-get-thing}
         {:put do-update-thing}

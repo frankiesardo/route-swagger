@@ -42,7 +42,7 @@
                                   "\"};"))
          (resource-response res {:root "swagger-ui/"}))))))
 
-(defn coerce-params
+(defn coerce-request
   "Creates an interceptor that coerces the params for the selected
   route, according to the route's swagger documentation. A coercion
   function f that acceps the route params schema and a context and return a
@@ -50,7 +50,7 @@
   interceptor chain if any coercion error occurs and return a 400
   response with an explanation for the failure. For more information
   consult 'pedestal.swagger.schema/?bad-request'."
-  ([] (coerce-params schema/?bad-request))
+  ([] (coerce-request schema/?bad-request))
   ([f]
    (doc/annotate
     {:responses {400 {}}}
