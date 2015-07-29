@@ -9,11 +9,11 @@
             [ring.swagger.swagger2 :as spec]
             [ring.util.http-status :as status]))
 
-(defn swagger-doc
+(defn swagger-json
   "Creates an interceptor that serves the generated documentation on
    the path fo your choice.  Accepts an optional function f that takes
    the swagger-object and returns a ring response."
-  ([] (swagger-doc
+  ([] (swagger-json
        (fn [swagger-object]
          (response (spec/swagger-json
                     swagger-object
@@ -21,9 +21,9 @@
                      #(get-in status/status [% :description] "")})))))
   ([f]
    (interceptor/before
-    ::doc/swagger-doc
+    ::doc/swagger-json
     (fn [{:keys [route] :as context}]
-      (assoc context :response (f (-> route meta ::doc/swagger-doc)))))))
+      (assoc context :response (f (-> route meta ::doc/swagger-object)))))))
 
 (defn swagger-ui
   "Creates an interceptor that serves the swagger ui on a path of your
@@ -39,7 +39,7 @@
        (case res
          "" (redirect (str path-info "index.html"))
          "conf.js" (response (str "window.API_CONF = {url: \""
-                                  (apply url-for ::doc/swagger-doc path-opts)
+                                  (apply url-for ::doc/swagger-json path-opts)
                                   "\"};"))
          (resource-response res {:root "swagger-ui/"}))))))
 

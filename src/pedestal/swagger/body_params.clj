@@ -1,7 +1,8 @@
 (ns pedestal.swagger.body-params
   (:require [io.pedestal.http.body-params :as pedestal]
             [ring.middleware.multipart-params :as multipart-params] 
-            [clojure.walk :as walk]))
+            [clojure.walk :as walk]
+            [linked.core :as linked]))
 
 (defn transit-msgpack-parser [request]
   (->> ((pedestal/custom-transit-parser :msgpack) request)

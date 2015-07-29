@@ -226,7 +226,7 @@
 
        ["/secure" ^:interceptors [basic-auth] {:delete delete-db}]
 
-       ["/swagger.json" {:get [(sw/swagger-doc)]}]
+       ["/swagger.json" {:get [(sw/swagger-json)]}]
        ["/*resource" {:get [(sw/swagger-ui)]}]]]]))
 
 (def service {:env :prod

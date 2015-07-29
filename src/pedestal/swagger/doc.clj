@@ -34,8 +34,8 @@
 
 ;;
 
-(defn- swagger-doc-route? [route]
-  (when (= ::swagger-doc (:route-name route)) route))
+(defn- swagger-json-route? [route]
+  (when (= ::swagger-json (:route-name route)) route))
 
 (defn- find-docs [{:keys [interceptors]}]
   (keep annotation interceptors))
@@ -43,8 +43,8 @@
 (defn- inject-swagger-into-routes [route-table swagger-object]
   (for [route route-table]
     (as-> route route
-          (if (swagger-doc-route? route)
-            (vary-meta route assoc ::swagger-doc swagger-object)
+          (if (swagger-json-route? route)
+            (vary-meta route assoc ::swagger-object swagger-object)
             route)
           (if-let [docs (seq (find-docs route))]
             (annotate (apply deep-merge docs) route)
