@@ -1,8 +1,12 @@
 ## Current
+- [Breaking] swagger-doc -> swagger-json
+- [Breaking] no more keywordize-params
+- [Breaking] coerce-params -> coerce-request
+- Interceptor core/body-params now takes a parser map, ensures the body keys are consistent to the ones expected by schema/coerce-request
 
 ## 0.4.2
-- fix formData coercion
-- add `annotate` fn to attach metadata to interceptors
+- Fix formData coercion
+- Add `annotate` fn to attach metadata to interceptors
 
 ## 0.4.0
 - Bump pedestal to 0.4.0
