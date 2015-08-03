@@ -30,7 +30,7 @@
   choice. Note that the path MUST specify a splat argument named
   \"resource\" e.g. \"my-path/*resource\". Acceps additional options
   used to construct the swagger-object url (such as :app-name
-  :your-app-name), using pedestal's 'path-for'."
+  :your-app-name), using pedestal's 'url-for'."
   [& path-opts]
   (interceptor/handler
    ::doc/swagger-ui
