@@ -9,21 +9,23 @@
             [ring.swagger.swagger2 :as spec]
             [ring.util.http-status :as status]))
 
+(defn- default-json-converter [swagger-object]
+  (spec/swagger-json
+   swagger-object
+   {:default-response-description-fn
+    #(get-in status/status [% :description] "")}))
+
 (defn swagger-json
   "Creates an interceptor that serves the generated documentation on
    the path fo your choice.  Accepts an optional function f that takes
    the swagger-object and returns a ring response."
-  ([] (swagger-json
-       (fn [swagger-object]
-         (response (spec/swagger-json
-                    swagger-object
-                    {:default-response-description-fn
-                     #(get-in status/status [% :description] "")})))))
+  ([] (swagger-json default-json-converter))
   ([f]
    (interceptor/before
     ::doc/swagger-json
     (fn [{:keys [route] :as context}]
-      (assoc context :response (f (-> route meta ::doc/swagger-object)))))))
+      (assoc context :response
+             {:status 200 :body (f (-> route meta ::doc/swagger-object))})))))
 
 (defn swagger-ui
   "Creates an interceptor that serves the swagger ui on a path of your
@@ -51,7 +53,7 @@
   interceptor chain if any coercion error occurs and return a 400
   response with an explanation for the failure. For more information
   consult 'pedestal.swagger.schema/?bad-request'."
-  ([] (coerce-request schema/?bad-request))
+  ([] (coerce-request (schema/make-coerce-request)))
   ([f]
    (doc/annotate
     {:responses {400 {}}}
@@ -69,7 +71,7 @@
   substitute the current response with a 500 response and an error
   explanation if a validation error occours. For more information
   consult 'pedestal.swagger.schema/?internal-server-error'."
-  ([] (validate-response schema/?internal-server-error))
+  ([] (validate-response (schema/make-validate-response)))
   ([f]
    (doc/annotate
     {:responses {500 {}}}

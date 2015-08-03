@@ -65,12 +65,6 @@
       bootstrap/service-fn
       ::bootstrap/service-fn))
 
-(defn swagger-validator [swagger-object]
-  (let [validator (v/validator (slurp (io/resource "ring/swagger/v2.0_schema.json")))
-        json (spec/swagger-json swagger-object {})]
-    (validator json)
-    (response json)))
-
 (definition/defroutes routes
   [["t" :test
     ["/" ^:interceptors [(body-params
@@ -84,7 +78,7 @@
       {:put put-handler
        :delete delete-handler
        :head non-documented-handler}]
-     ["/doc" {:get [(swagger-json swagger-validator)]}]]]])
+     ["/doc" {:get [(swagger-json)]}]]]])
 
 (def app (make-app {::bootstrap/router :prefix-tree ;; or :linear-search
                     ::bootstrap/routes (doc/inject-docs
@@ -123,6 +117,10 @@
                         :responses {400 {}
                                     500 {}}}}}]
     (is (= paths (doc/gen-paths routes)))))
+
+(deftest generates-valid-json-schema
+  (let [validator (v/validator (slurp (io/resource "ring/swagger/v2.0_schema.json")))]
+    (validator (spec/swagger-json {:paths (doc/gen-paths routes)}))))
 
 (deftest coerces-params
   (are [resp req] (= resp (read-string (:body req)))
@@ -178,9 +176,3 @@
   (are [resp req] (= resp (read-string (:body req)))
        {:error {:headers {"auth" "missing-required-key"}}}
        (response-for app :get "http://t/doc")))
-
-(deftest generates-valid-json-schema
-  (is (= 200 (:status
-              (response-for app
-                            :get "http://t/doc"
-                            :headers {"Auth" "y"})))))
