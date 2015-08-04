@@ -3,7 +3,7 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.7.0"]
-                 [frankiesardo/pedestal-swagger "0.4.3-SNAPSHOT"
+                 [frankiesardo/pedestal-swagger "0.4.4-SNAPSHOT"
                   :exclusions [metosin/ring-swagger]]
                  [metosin/ring-swagger "0.21.0-SNAPSHOT"]
 
