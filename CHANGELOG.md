@@ -1,4 +1,4 @@
-## Current
+## 0.4.3
 - [Breaking] swagger-doc -> swagger-json
 - [Breaking] no more keywordize-params
 - [Breaking] coerce-params -> coerce-request
