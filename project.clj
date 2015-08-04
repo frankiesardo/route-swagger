@@ -1,4 +1,4 @@
-(defproject frankiesardo/pedestal-swagger "0.4.3"
+(defproject frankiesardo/pedestal-swagger "0.4.4-SNAPSHOT"
   :description "Swagger documentation for Pedestal routes"
   :url "http://github.com/frankiesardo/pedestal-swagger"
   :license {:name "Eclipse Public License"
