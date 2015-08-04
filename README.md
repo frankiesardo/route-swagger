@@ -127,7 +127,7 @@ A common pattern is to have an interceptor at the root of a path that loads a re
 ```
 All the documentation specified in the interceptor (such as parameters, responses, description) will be inherited by the endpoints on the same path. Thus you can reuse both behaviour and the documentation for said behaviour.
 
-And finally we want to be able to use the schemas in the documentation to check the incoming parameters or the outgoing responses. To do so we can include `swagger/coerce-parameters` and `swagger/validate-response` at the top of our route spec. The default behaviour of these interceptors could be overridden passing a custom coercion or validation function.
+And finally we want to be able to use the schemas in the documentation to check the incoming parameters or the outgoing responses. To do so we can include `swagger/coerce-request` and `swagger/validate-response` at the top of our route spec. The default behaviour of these interceptors could be overridden passing a custom coercion or validation function.
 
 ```clj
 (swagger/defroutes routes
@@ -140,7 +140,7 @@ And finally we want to be able to use the schemas in the documentation to check 
       {:delete do-delete-thing}]]]])
 ```
 
-Note that you usually need to include (swagger/body-params) as it will make sure the keys in the request map are where the validator expect to find them. Each interceptor can still be configured to tweak is behaviour.
+Note that you usually need to include `(swagger/body-params)` as it will make sure the keys in the request map are where the validator expects to find them. Each interceptor can still be configured to tweak its default behaviour.
 
 For a complete example have a look at the `sample` project.
 
