@@ -1,5 +1,3 @@
 test:
-  pre:
-   - git clone $DOTFILES ~/dotfiles && . ~/dotfiles/init.sh
   post:
-    - lein circle
+    - if [-n "$DOTFILES"]; then git clone $DOTFILES ~/dotfiles && . ~/dotfiles/init.sh && lein circle
