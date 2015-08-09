@@ -67,8 +67,8 @@ But what you normally want is to inject the swagger paths in your route table, s
 
 ```clj
 (swagger/defroutes routes
-  {:title "Swagger API"
-   :description "Swagger + Pedestal api"}
+  {:info {:title "Swagger API"
+          :description "Swagger + Pedestal api"}}
   [[["/my-endpoint" {:get my-endpoint}]]])
 ```
 
