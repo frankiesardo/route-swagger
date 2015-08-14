@@ -146,7 +146,17 @@
        (response-for app :put "http://t/x/1"
                      :headers {"Auth" "y"
                                "Content-Type" "application/edn"}
-                     :body (pr-str {:name "foo"}))))
+                     :body (pr-str {:name "foo"})))
+
+  (testing "returns 400 when given bad json"
+    (is (= {:status 400
+            :body "Body params cannot be deserialised"}
+           (select-keys
+            (response-for app :put "http://t/x/1"
+                          :headers {"Auth" "y"
+                                    "Content-Type" "application/edn"}
+                          :body "{\"foo\": }")
+            [:status :body])))))
 
 (deftest validates-response
   (are [status resp req] (and (= status (:status req))
