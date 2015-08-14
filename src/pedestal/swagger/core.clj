@@ -5,6 +5,7 @@
             [schema.core :as s]
             [io.pedestal.http.route.definition :refer [expand-routes]]
             [io.pedestal.interceptor.helpers :as interceptor]
+            [io.pedestal.interceptor :as i]
             [ring.util.response :refer [response resource-response redirect]]
             [ring.swagger.swagger2 :as spec]
             [ring.util.http-status :as status]))
@@ -87,15 +88,28 @@
 ;;;; Pedestal aliases
 
 (defn body-params
-  "An almost drop-in replacement for pedestal's body-params. Accepts a parser map with content-type strings as keys instead of regexes. Ensures the body keys assoc'd into the request are the ones coerce-request expects and keywordize keys by default."
+  "An almost drop-in replacement for pedestal's body-params.
+  Accepts a parser map with content-type strings as keys instead of regexes.
+  Ensures the body keys assoc'd into the request are the ones coerce-request expects
+  and keywordizes keys by default. Returns a 400 if body-params cannot be deserialised."
   ([] (body-params body-params/default-parser-map))
   ([parser-map]
    (doc/annotate
-    {:consumes (keys parser-map)}
-    (interceptor/on-request
-     ::body-params
-     (fn [request]
-       (body-params/parse-content-type parser-map request))))))
+    {:consumes (keys parser-map)
+     :responses {400 {}}}
+    (i/interceptor
+     {:name ::body-params
+      :enter
+      (fn [{:keys [request] :as context}]
+        (assoc context :request (body-params/parse-content-type parser-map request)))
+      :error
+      (fn [context error]
+        (if (and (= ::body-params (:interceptor (ex-data error)))
+                 (nil? (:response context)))
+          (assoc context :response {:status 400
+                                    :headers {}
+                                    :body "Body params cannot be deserialised"})
+          (throw error)))}))))
 
 (defmacro defhandler
   "A drop-in replacement for pedestal's equivalent interceptor. Makes
