@@ -117,7 +117,7 @@
   documentation."
   [name doc args & body]
   `(def ~name
-     (doc/annotate ~doc (interceptor/handler (keyword ~name) (fn ~args ~@body)))))
+     (doc/annotate ~doc (interceptor/handler ~(keyword (str *ns*) (str name)) (fn ~args ~@body)))))
 
 (defmacro defmiddleware
   "A drop-in replacement for pedestal's equivalent interceptor. Makes
@@ -127,7 +127,7 @@
   (let [f1 (cons 'fn before)
         f2 (cons 'fn after)]
     `(def ~name
-       (doc/annotate ~doc (interceptor/middleware (keyword ~name) ~f1 ~f2)))))
+       (doc/annotate ~doc (interceptor/middleware ~(keyword (str *ns*) (str name)) ~f1 ~f2)))))
 
 (defmacro defon-request
   "A drop-in replacement for pedestal's equivalent interceptor. Makes
@@ -135,7 +135,7 @@
   documentation."
   [name doc args & body]
   `(def ~name
-     (doc/annotate ~doc (interceptor/on-request (keyword ~name) (fn ~args ~@body)))))
+     (doc/annotate ~doc (interceptor/on-request ~(keyword (str *ns*) (str name)) (fn ~args ~@body)))))
 
 (defmacro defon-response
   "A drop-in replacement for pedestal's equivalent interceptor. Makes
@@ -143,7 +143,7 @@
   documentation."
   [name doc args & body]
   `(def ~name
-     (doc/annotate ~doc (interceptor/on-response (keyword ~name) (fn ~args ~@body)))))
+     (doc/annotate ~doc (interceptor/on-response ~(keyword (str *ns*) (str name)) (fn ~args ~@body)))))
 
 (defmacro defaround
   "A drop-in replacement for pedestal's equivalent interceptor. Makes
@@ -153,7 +153,7 @@
   (let [f1 (cons 'fn before)
         f2 (cons 'fn after)]
     `(def ~name
-       (doc/annotate ~doc (interceptor/around (keyword ~name) ~f1 ~f2)))))
+       (doc/annotate ~doc (interceptor/around ~(keyword (str *ns*) (str name)) ~f1 ~f2)))))
 
 (defmacro defbefore
   "A drop-in replacement for pedestal's equivalent interceptor. Makes
@@ -161,7 +161,7 @@
   documentation."
   [name doc args & body]
   `(def ~name
-     (doc/annotate ~doc (interceptor/before (keyword ~name) (fn ~args ~@body)))))
+     (doc/annotate ~doc (interceptor/before ~(keyword (str *ns*) (str name)) (fn ~args ~@body)))))
 
 (defmacro defafter
   "A drop-in replacement for pedestal's equivalent interceptor. Makes
@@ -169,7 +169,7 @@
   documentation."
   [name doc args & body]
   `(def ~name
-     (doc/annotate ~doc (interceptor/after (keyword ~name) (fn ~args ~@body)))))
+     (doc/annotate ~doc (interceptor/after ~(keyword (str *ns*) (str name)) (fn ~args ~@body)))))
 
 (defmacro defroutes
   "A drop-in replacement for pedestal's defroutes.  In addition to
