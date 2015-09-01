@@ -17,10 +17,11 @@ Generate Swagger documentation from pedestal routes
 ```clj
 (:require [io.pedestal.interceptor.helpers :as interceptor]
           [schema.core :as schema]
-          [pedestal.swagger.core :as swagger])
+          [pedestal.swagger.core :as swagger]
+          [pedestal.swagger.doc :as swagger.doc])
 ```
 
-Annotate your interceptors using `swagger/annotate`. This function will attach swagger metadata to your interceptor.
+Annotate your interceptors using `swagger.doc/annotate`. This function will attach swagger metadata to your interceptor.
 
 ```clj
 (def my-endpoint
@@ -55,10 +56,10 @@ And of course there are some helping macros in the swagger namespace to help you
   ...)
 ```
 
-A swagger path specification can be generated from your route table. You can inspect at any time what it looks like calling `pedestal.swagger.doc/gen-paths`.
+A swagger path specification can be generated from your route table. You can inspect at any time what it looks like calling `gen-paths`.
 
 ```clj
-(gen-paths routes)
+(swagger.doc/gen-paths routes)
 
 ;; => {"/my-endpoint" {:get {...}} ...}
 ```
