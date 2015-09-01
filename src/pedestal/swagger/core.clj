@@ -59,6 +59,7 @@
    (doc/annotate
     {:responses {400 {}}}
      (interceptor/before
+      ::coerce-request
       (fn [{:keys [route] :as context}]
         (if-let [schema (->> route doc/annotation :parameters)]
           (f schema context)
@@ -77,6 +78,7 @@
    (doc/annotate
     {:responses {500 {}}}
      (interceptor/after
+      ::validate-response
       (fn [{:keys [response route] :as context}]
         (if-let [schemas (->> route doc/annotation :responses)]
           (if-let [schema (or (schemas (:status response))
