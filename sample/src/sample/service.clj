@@ -1,6 +1,7 @@
 (ns sample.service
   (:require [pedestal.swagger.core :as sw]
             [pedestal.swagger.doc :as sw.doc]
+            [pedestal.swagger.error :as sw.error]
             [io.pedestal.http :as bootstrap]
             [io.pedestal.http.route :as route]
             [io.pedestal.impl.interceptor :refer [terminate]]
@@ -205,6 +206,7 @@
             {:name "orders"
              :description "Operations about orders"}]}
     [[["/" ^:interceptors [bootstrap/json-body
+                           sw.error/handler
                            (sw/body-params)
                            (sw/coerce-request)
                            (sw/validate-response)]

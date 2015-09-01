@@ -17,9 +17,9 @@
     #(get-in status/status [% :description] "")}))
 
 (defn swagger-json
-  "Creates an interceptor that serves the generated documentation on
-   the path fo your choice.  Accepts an optional function f that takes
-   the swagger-object and returns a ring response."
+  "Creates an interceptor that serves the generated documentation on the path of
+  your choice. Accepts an optional function f that takes the swagger-object and
+  returns a json body."
   ([] (swagger-json default-json-converter))
   ([f]
    (interceptor/before
@@ -29,11 +29,11 @@
              {:status 200 :body (f (-> route meta ::doc/swagger-object))})))))
 
 (defn swagger-ui
-  "Creates an interceptor that serves the swagger ui on a path of your
-  choice. Note that the path MUST specify a splat argument named
-  \"resource\" e.g. \"my-path/*resource\". Acceps additional options
-  used to construct the swagger-object url (such as :app-name
-  :your-app-name), using pedestal's 'url-for'."
+  "Creates an interceptor that serves the swagger ui on a path of your choice.
+  Note that the path MUST specify a splat argument named \"resource\" e.g.
+  \"my-path/*resource\". Acceps additional options used to construct the
+  swagger-object url (such as :app-name :your-app-name), using pedestal's
+  'url-for' syntax."
   [& path-opts]
   (interceptor/handler
    ::doc/swagger-ui
@@ -47,44 +47,33 @@
          (resource-response res {:root "swagger-ui/"}))))))
 
 (defn coerce-request
-  "Creates an interceptor that coerces the params for the selected
-  route, according to the route's swagger documentation. A coercion
-  function f that acceps the route params schema and a context and return a
-  context can be supplied. The default implementation terminates the
-  interceptor chain if any coercion error occurs and return a 400
-  response with an explanation for the failure. For more information
-  consult 'pedestal.swagger.schema/?bad-request'."
+  "Creates an interceptor that coerces the params for the selected route,
+  according to the route's swagger documentation. A coercion function f that
+  acceps the route params schema and a request and return a request can be
+  supplied. The default implementation throws if any coercion error occurs."
   ([] (coerce-request (schema/make-coerce-request)))
   ([f]
-   (doc/annotate
-    {:responses {400 {}}}
-     (interceptor/before
-      ::coerce-request
-      (fn [{:keys [route] :as context}]
-        (if-let [schema (->> route doc/annotation :parameters)]
-          (f schema context)
-          context))))))
+   (interceptor/before
+    ::coerce-request
+    (fn [{:keys [route] :as context}]
+      (if-let [schema (->> route doc/annotation :parameters)]
+        (update context :request (partial f schema))
+        context)))))
 
 (defn validate-response
-  "Creates an interceptor that validates the response for the selected
-  route, according to the route's swagger documentation. A validation
-  function f that accepts the route response schema and a context and
-  return a context can be supplied. The default implementation will
-  substitute the current response with a 500 response and an error
-  explanation if a validation error occours. For more information
-  consult 'pedestal.swagger.schema/?internal-server-error'."
+  "Creates an interceptor that validates the response for the selected route,
+  according to the route's swagger documentation. A validation function f that
+  accepts the route response schema and a response and return a response can be
+  supplied. The default implementation throws if a validation error occours."
   ([] (validate-response (schema/make-validate-response)))
   ([f]
-   (doc/annotate
-    {:responses {500 {}}}
-     (interceptor/after
-      ::validate-response
-      (fn [{:keys [response route] :as context}]
-        (if-let [schemas (->> route doc/annotation :responses)]
-          (if-let [schema (or (schemas (:status response))
-                              (schemas :default))]
-            (f schema context)
-            context)
+   (interceptor/after
+    ::validate-response
+    (fn [{:keys [response route] :as context}]
+      (let [schemas (->> route doc/annotation :responses)]
+        (if-let [schema (or (get schemas (:status response))
+                            (get schemas :default))]
+          (update context :response (partial f schema))
           context))))))
 
 ;;;; Pedestal aliases
@@ -92,26 +81,16 @@
 (defn body-params
   "An almost drop-in replacement for pedestal's body-params.
   Accepts a parser map with content-type strings as keys instead of regexes.
-  Ensures the body keys assoc'd into the request are the ones coerce-request expects
-  and keywordizes keys by default. Returns a 400 if body-params cannot be deserialised."
+  Ensures the body keys assoc'd into the request are the ones coerce-request
+  expects and keywordizes keys by default."
   ([] (body-params body-params/default-parser-map))
   ([parser-map]
    (doc/annotate
-    {:consumes (keys parser-map)
-     :responses {400 {}}}
-    (i/interceptor
-     {:name ::body-params
-      :enter
-      (fn [{:keys [request] :as context}]
-        (assoc context :request (body-params/parse-content-type parser-map request)))
-      :error
-      (fn [context error]
-        (if (and (= ::body-params (:interceptor (ex-data error)))
-                 (nil? (:response context)))
-          (assoc context :response {:status 400
-                                    :headers {}
-                                    :body "Body params cannot be deserialised"})
-          (throw error)))}))))
+    {:consumes (keys parser-map)}
+    (interceptor/before
+     ::body-params
+     (fn [{:keys [request] :as context}]
+       (assoc context :request (body-params/parse-content-type parser-map request)))))))
 
 (defmacro defhandler
   "A drop-in replacement for pedestal's equivalent interceptor. Makes

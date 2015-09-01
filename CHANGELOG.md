@@ -1,3 +1,8 @@
+## Current
+- [Breaking] Move error handling to `pedestal.swagger.error`
+- [Breaking] Coerce/validate functions do not have access to context anymore.
+- Coerce/validate functions accept custom coercions as parameters.
+
 ## 0.4.3
 - [Breaking] swagger-doc -> swagger-json
 - [Breaking] no more keywordize-params

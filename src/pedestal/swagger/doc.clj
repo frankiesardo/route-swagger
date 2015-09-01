@@ -1,5 +1,6 @@
  (ns pedestal.swagger.doc
    (:require [ring.swagger.swagger2-schema :as spec]
+             [ring.swagger.common :refer [deep-merge]]
              [schema.core :as s]))
 
 (s/defn annotate
@@ -10,29 +11,6 @@
 (def annotation
   "Gets documentation from an annotated object"
   (comp ::doc meta))
-
-;;
-
-(defn- deep-merge-with
-  "Like merge-with, but merges maps recursively, applying the given fn
-  only when there's a non-map at a particular level.
-
-  (deep-merge-with + {:a {:b {:c 1 :d {:x 1 :y 2}} :e 3} :f 4}
-                     {:a {:b {:c 2 :d {:z 9} :z 3} :e 100}})
-  -> {:a {:b {:z 3, :c 3, :d {:z 9, :x 1, :y 2}}, :e 103}, :f 4}"
-  [f & maps]
-  (apply
-   (fn m [& maps]
-     (if (every? map? maps)
-       (apply merge-with m maps)
-       (apply f maps)))
-   maps))
-
-(def ^:private deep-merge
-  "Deep merge where the last colliding value overrides the others."
-  (partial deep-merge-with (fn [& args] (last args))))
-
-;;
 
 (defn- swagger-json-route? [route]
   (when (= ::swagger-json (:route-name route)) route))
@@ -58,8 +36,8 @@
 
 (s/defn gen-paths :- Paths
   "Generates swagger paths from an expanded route table.
-  This function can also be used to generate documentation
-  offline or for easy debugging (turning schema checks on)."
+  This function can also be used to generate documentation offline or for easy
+  debugging (turning schema checks on)."
   [route-table]
   (apply merge-with merge
          (for [{:keys [path method] :as route} route-table
@@ -69,10 +47,10 @@
 
 
 (s/defn inject-docs
-  "Attaches swagger information as a meta key to each documented
-  route. The context passed to each interceptor has a reference to the
-  selected route, so information like request and response schemas and
-  the swagger object can be retrieved from its meta."
+  "Attaches swagger information as a meta key to each documented route. The
+  context passed to each interceptor has a reference to the selected route, so
+  information like request and response schemas and the swagger object can be
+  retrieved from its meta."
   [docs route-table]
   (let [swagger-object (deep-merge {:swagger "2.0"
                                     :info {:title "Swagger API"

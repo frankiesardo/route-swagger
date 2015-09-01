@@ -142,6 +142,8 @@ And finally we want to be able to use the schemas in the documentation to check 
 
 Note that you usually need to include `(swagger/body-params)` as it will make sure the keys in the request map are where the validator expects to find them. Each interceptor can still be configured to tweak its default behaviour.
 
+An interceptor with sensible error handling for most of swagger use cases is available under `pedestal.swagger.error` namespace, but you're encouraged to build your own using pedestal pattern matching.
+
 For a complete example have a look at the `sample` project.
 
 

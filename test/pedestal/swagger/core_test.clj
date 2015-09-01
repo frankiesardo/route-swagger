@@ -5,6 +5,7 @@
             [schema.core :as s]
             [schema.test :as validation]
             [pedestal.swagger.doc :as doc]
+            [pedestal.swagger.error :as error]
             [pedestal.swagger.body-params :as body-params]
             [ring.util.response :refer [response]]
             [ring.swagger.swagger2 :as spec]
@@ -67,7 +68,8 @@
 
 (definition/defroutes routes
   [["t" :test
-    ["/" ^:interceptors [(body-params
+    ["/" ^:interceptors [error/handler
+                         (body-params
                           (select-keys body-params/default-parser-map
                                        ["application/edn"]))
                          (coerce-request)
@@ -146,17 +148,7 @@
        (response-for app :put "http://t/x/1"
                      :headers {"Auth" "y"
                                "Content-Type" "application/edn"}
-                     :body (pr-str {:name "foo"})))
-
-  (testing "returns 400 when given bad json"
-    (is (= {:status 400
-            :body "Body params cannot be deserialised"}
-           (select-keys
-            (response-for app :put "http://t/x/1"
-                          :headers {"Auth" "y"
-                                    "Content-Type" "application/edn"}
-                          :body "{\"foo\": }")
-            [:status :body])))))
+                     :body (pr-str {:name "foo"}))))
 
 (deftest validates-response
   (are [status resp req] (and (= status (:status req))
@@ -181,6 +173,16 @@
        (response-for app
                      :get "http://t/?q=fail"
                      :headers {"Auth" "y"})))
+
+(deftest checks-body-params
+  (testing "returns 400 when given badly formatted body"
+    (is (= 400
+           (:status
+            (response-for app
+                          :put "http://t/x/1"
+                          :headers {"Auth" "y"
+                                    "Content-Type" "application/edn"}
+                          :body "{\"foo\" }"))))))
 
 (deftest checks-swagger-handler-like-any-other-route
   (are [resp req] (= resp (read-string (:body req)))
