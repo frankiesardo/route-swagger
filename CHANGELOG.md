@@ -1,4 +1,4 @@
-## Current
+## 0.4.4
 - [Breaking] Move error handling to `pedestal.swagger.error`
 - [Breaking] Coerce/validate functions do not have access to context anymore.
 - Coerce/validate functions accept custom coercions as parameters.
