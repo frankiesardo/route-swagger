@@ -1,7 +1,8 @@
- (ns pedestal.swagger.doc
-   (:require [ring.swagger.swagger2-schema :as spec]
-             [ring.swagger.common :refer [deep-merge]]
-             [schema.core :as s]))
+(ns pedestal.swagger.doc
+  (:require [clojure.string :as str]
+            [ring.swagger.swagger2-schema :as spec]
+            [ring.swagger.common :refer [deep-merge]]
+            [schema.core :as s]))
 
 (s/defn annotate
   "Attaches swagger documentation to an object"
@@ -41,7 +42,8 @@
   [route-table]
   (apply merge-with merge
          (for [{:keys [path method] :as route} route-table
-               :let [docs (find-docs route)]
+               :let [docs (find-docs route)
+                     path (str/replace path #"\*" ":")]
                :when (documented-handler? route)]
            {path {method (apply deep-merge docs)}})))
 
