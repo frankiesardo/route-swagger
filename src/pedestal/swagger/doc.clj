@@ -43,7 +43,7 @@
          (for [{:keys [path method] :as route} route-table
                :let [docs (find-docs route)]
                :when (documented-handler? route)]
-           {path {method (apply deep-merge docs)}})))
+           {path {method (apply deep-merge :into docs)}})))
 
 
 (s/defn inject-docs

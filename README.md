@@ -132,7 +132,8 @@ And finally we want to be able to use the schemas in the documentation to check 
 
 ```clj
 (swagger/defroutes routes
-  [[["/" ^:interceptors [(swagger/body-params)
+  [[["/" ^:interceptors [(swagger/serialise-response)
+                         (swagger/body-params)
                          (swagger/coerce-request)
                          (swagger/validate-response)]
      ["/thing/:id" ^:interceptors [load-thing-from-db]
@@ -145,13 +146,15 @@ Note that you usually need to include `(swagger/body-params)` as it will make su
 
 An interceptor with sensible error handling for most of swagger use cases is available under `pedestal.swagger.error` namespace, but you're encouraged to build your own using pedestal pattern matching.
 
+The `swagger/serialise-response` interceptor provides content-negotiation for the serialisers built in to Pedestal. You can extend it with your own content-types by passing in a map similar to `pedestal.swagger.content-negotiation/default-serialisation-interceptors`.
+
 For a complete example have a look at the `sample` project.
 
 
 ## Roadmap
 
 - Support multiple swagger.json and swagger-ui endpoints (e.g. for versioned apis)
-- Content negotiation and documenting `consumes`
+- Documenting `consumes`
 - More failures at compile time (tags not in sync, produces/consumes not in sync)
 
 ## License
