@@ -66,6 +66,32 @@
       bootstrap/service-fn
       ::bootstrap/service-fn))
 
+;; ----------------------------------
+
+(defon-response multi-content-type-response
+  {:description "Serialises responses in many ways"
+   :produces ["application/json" "application/edn" "application/xml"]}
+  [req] req)
+
+(definition/defroutes content-negotiation-routes
+  [["t" :test
+    ["/" ^:interceptors [multi-content-type-response]
+     {:get (vary-meta get-handler assoc-in [::doc/doc :produces] ["application/ducks"])}]]])
+
+(deftest builds-produces-meta-properly
+  (let [paths {"/"
+               {:get
+                {:produces ["application/json" "application/edn" "application/xml" "application/ducks"],
+                 :description "Serialises responses in many ways"
+                 :summary "Get all resources"
+                 :parameters {:query {:q s/Str}}
+                 :responses {200 {:schema {:status s/Str}}
+                             :default {:schema {:result [s/Str]}
+                                       :headers {(req "Location") s/Str}}}}}}]
+    (is (= paths (doc/gen-paths content-negotiation-routes)))))
+
+;; ------------------------
+
 (definition/defroutes routes
   [["t" :test
     ["/" ^:interceptors [error/handler

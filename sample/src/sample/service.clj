@@ -205,8 +205,8 @@
                             :url "http://swagger.io"}}
             {:name "orders"
              :description "Operations about orders"}]}
-    [[["/" ^:interceptors [bootstrap/json-body
-                           sw.error/handler
+    [[["/" ^:interceptors [sw.error/handler
+                           (sw/serialise-response)
                            (sw/body-params)
                            (sw/coerce-request)
                            (sw/validate-response)]

@@ -2,6 +2,7 @@
   (:require [pedestal.swagger.doc :as doc]
             [pedestal.swagger.schema :as schema]
             [pedestal.swagger.body-params :as body-params]
+            [pedestal.swagger.content-negotiation :as content-negotiation]
             [schema.core :as s]
             [io.pedestal.http.route.definition :refer [expand-routes]]
             [io.pedestal.interceptor.helpers :as interceptor]
@@ -91,6 +92,8 @@
      ::body-params
      (fn [{:keys [request] :as context}]
        (assoc context :request (body-params/parse-content-type parser-map request)))))))
+
+(def serialise-response content-negotiation/serialise-response)
 
 (defmacro defhandler
   "A drop-in replacement for pedestal's equivalent interceptor. Makes
