@@ -147,7 +147,7 @@
     (is (= paths (doc/gen-paths routes)))))
 
 (deftest generates-valid-json-schema
-  (let [validator (v/validator (slurp (io/resource "ring/swagger/v2.0_schema.json")))]
+  (let [validator (v/validator (slurp (io/resource "ring/swagger/swagger-schema.json")))]
     (validator (spec/swagger-json {:paths (doc/gen-paths routes)}))))
 
 (deftest coerces-params
