@@ -1,6 +1,7 @@
 ## 0.4.5
 
 - Content negotiation
+- Bump dependencies
 
 ## 0.4.4
 - [Breaking] Move error handling to `pedestal.swagger.error`
