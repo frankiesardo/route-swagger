@@ -26,7 +26,7 @@ Annotate your interceptors using `swagger.doc/annotate`. This function will atta
 ```clj
 (def my-endpoint
   (swagger/annotate
-   {:summary "Enpoint for stuff"
+   {:summary "Endpoint for stuff"
     :description "This is an interesting endpoint"
     :parameters {:query {:param1 schema/Bool}
                  :body {:param2 schema/Str
