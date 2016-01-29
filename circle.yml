@@ -1,3 +1,19 @@
+machine:
+  pre:
+    - wget -O bin/boot https://github.com/boot-clj/boot/releases/download/2.2.0/boot.sh
+    - chmod 755 bin/boot
+    - boot -V
+  environment:
+    BOOT_JVM_OPTIONS: "-Xmx2g"
 test:
-  post:
-    - if [ -n "$DOTFILES" ]; then git clone $DOTFILES ~/dotfiles && . ~/dotfiles/init.sh && lein circle; fi
+  override:
+    - boot test
+deployment:
+  release:
+    tag: /.*/
+    commands:
+      - boot deploy
+  snapshot:
+    branch: master
+    commands:
+      - boot deploy

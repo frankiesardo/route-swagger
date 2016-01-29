@@ -6,6 +6,9 @@ pom.xml.asc
 *.jar
 *.class
 /.lein-*
-!/.lein-classpath
 /.nrepl-port
+/logs
+.DS_STORE
 *.iml
+/.idea
+/project.clj
