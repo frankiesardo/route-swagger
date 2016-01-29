@@ -4,8 +4,6 @@
 
 Generate Swagger documentation from pedestal (or tripod) routes
 
-- [Documentation](http://frankiesardo.github.io/route-swagger/)
-
 - [Demo](https://pedestal-swagger.herokuapp.com)
 
 ## For old pedestal-swagger users
