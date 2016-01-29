@@ -1,6 +1,6 @@
 # route-swagger
 
-[![Build status](https://circleci.com/gh/frankiesardo/route-swagger.svg?style=shield)](https://circleci.com/gh/frankiesardo/route-swagger) [![Dependencies Status](http://jarkeeper.com/frankiesardo/pedestal-swagger/status.png)](http://jarkeeper.com/frankiesardo/pedestal-swagger)
+[![Build status](https://circleci.com/gh/frankiesardo/route-swagger.svg?style=shield)](https://circleci.com/gh/frankiesardo/route-swagger)
 
 Generate Swagger documentation from pedestal (or tripod) routes
 
