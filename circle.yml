@@ -4,7 +4,7 @@ machine:
     - chmod 755 bin/boot
     - boot -V
   environment:
-    BOOT_JVM_OPTIONS: "-Xmx2g"
+    BOOT_JVM_OPTIONS: "-Xmx2g -XX:MaxPermSize=128m"
 test:
   override:
     - boot test
