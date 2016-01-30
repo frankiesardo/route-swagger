@@ -66,5 +66,5 @@
                                             :info    {:title   "Swagger API"
                                                       :version "0.0.1"}}))
   ([route-table docs]
-   (let [swagger-object (deep-merge {:paths (paths route-table)} docs)]
+   (let [swagger-object (deep-merge :into {:paths (paths route-table)} docs)]
      (inject-swagger-into-routes route-table swagger-object))))
