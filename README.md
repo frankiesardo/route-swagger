@@ -23,7 +23,7 @@ Route-swagger is a much lower level library. Everything the old pedestal-swagger
 
 Instead of `body`, `formData`, `query`, `schema`, etc. That should make it much more user friendly for clojure users.
 
-For a nicer integration with pedestal and extra features check out pedestal-api.
+For a nicer integration with pedestal, extra features and easier migration path from the old pedestal-swagger check out [pedestal-api](https://github.com/oliyh/pedestal-api).
 
 ## Download
 
