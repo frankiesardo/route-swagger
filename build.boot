@@ -4,7 +4,7 @@
  :dependencies
  '[[org.clojure/clojure "1.7.0"]
 
-   [metosin/ring-swagger "0.22.3"]
+   [metosin/ring-swagger "0.22.4"]
    [metosin/ring-swagger-ui "2.1.4-0"]
 
    [adzerk/bootlaces "0.1.13" :scope "test"]
