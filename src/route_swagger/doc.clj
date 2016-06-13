@@ -3,7 +3,8 @@
             [ring.swagger.common :refer [deep-merge]]
             [schema.core :as s]
             [plumbing.core :refer [map-vals]]
-            [clojure.set :as set]))
+            [clojure.set :as set]
+            [linked.core :as linked]))
 
 (s/defn annotate
   "Attaches swagger documentation to an object"
@@ -54,8 +55,10 @@
          (for [{:keys [path method] :as route} route-table
                :let [docs (find-docs route)]
                :when (documented-handler? route)]
-           {path {method (ring-keys->swagger (apply deep-merge :into docs))}})))
-
+           (linked/map path 
+                       (linked/map method
+                                   (ring-keys->swagger 
+                                    (apply deep-merge :into docs)))))))
 
 (defn with-swagger
   "Attaches swagger information as a meta key to each documented route. The
