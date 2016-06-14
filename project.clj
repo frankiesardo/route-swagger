@@ -1,8 +1,6 @@
-(defproject route-swagger
-  "0.1.1-SNAPSHOT"
+(defproject route-swagger "Build with boot"
   :dependencies
   [[org.clojure/clojure "1.7.0"]
-   [frankiesardo/linked "1.2.6"]
    [metosin/ring-swagger "0.22.3"]
    [metosin/ring-swagger-ui "2.1.4-0"]]
   :source-paths ["src" "resources"]
