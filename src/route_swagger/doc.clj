@@ -53,12 +53,13 @@
   [route-table]
   (apply merge-with merge
          (for [{:keys [path method] :as route} route-table
-               :let [docs (find-docs route)]
+               :let [docs (find-docs route)
+                     operation-id (some-> route :interceptors last :name name)]
                :when (documented-handler? route)]
-           (linked/map path 
+           (linked/map path
                        (linked/map method
-                                   (ring-keys->swagger 
-                                    (apply deep-merge :into docs)))))))
+                                   (ring-keys->swagger
+                                    (apply deep-merge :into (cons {:operationId operation-id} docs))))))))
 
 (defn with-swagger
   "Attaches swagger information as a meta key to each documented route. The
