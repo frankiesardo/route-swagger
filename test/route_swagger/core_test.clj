@@ -53,7 +53,8 @@
 (def delete-handler
   (sw.doc/annotate
     {:summary    "Delete resource with id"
-     :parameters {:query-params {:notify s/Bool}}}
+     :parameters {:query-params {:notify s/Bool}}
+     :operationId "delete-resource"}
     (i/interceptor
       {:name  ::delete-handler
        :enter (fn [{{:keys [query-params path-params headers]} :request :as context}]
@@ -120,7 +121,8 @@
                                :header {(req "auth") s/Str}}
                  :responses   {200      {:schema {:status s/Str}}
                                :default {:schema  {:result [s/Str]}
-                                         :headers {(req "Location") s/Str}}}}}
+                                         :headers {(req "Location") s/Str}}}
+                 :operationId "get-handler"}}
                "/x/:id"
                {:put
                 {:description "Requires id on path"
@@ -128,14 +130,16 @@
                  :parameters  {:path   {:id s/Int}
                                :header {(req "auth") s/Str}
                                :body   {:name s/Keyword}}
-                 :responses   {}}
+                 :responses   {}
+                 :operationId "put-handler"}
                 :delete
                 {:description "Requires id on path"
                  :summary     "Delete resource with id"
                  :parameters  {:path   {:id s/Int}
                                :header {(req "auth") s/Str}
                                :query  {:notify s/Bool}}
-                 :responses   {}}}}]
+                 :responses   {}
+                 :operationId "delete-resource"}}}]
     (is (= paths (sw.doc/paths routes)))))
 
 (defn make-app [options]
