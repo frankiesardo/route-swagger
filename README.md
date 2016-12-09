@@ -8,7 +8,7 @@ Generate Swagger documentation from pedestal (or tripod) routes
 
 ## For old pedestal-swagger users
 
-This project now focuses solely on route transformation and schema validation and thus is pedestal-agrostic.
+This project now focuses solely on route transformation and schema validation and thus is pedestal-agnostic.
 
 Route-swagger is a much lower level library. Everything the old pedestal-swagger did is still possible (look at the example repo) but requires a bit more boilerplate. The major breaking difference is that now route-swagger uses ring specific keys for describing the schema rather than swagger ones, e.g.
 
