@@ -3,7 +3,7 @@
             [pedestal.swagger.schema :as schema]
             [pedestal.swagger.body-params :as body-params]
             [schema.core :as s]
-            [io.pedestal.http.route.definition :refer [expand-routes]]
+            [io.pedestal.http.route :refer [expand-routes]]
             [io.pedestal.interceptor.helpers :as interceptor]
             [io.pedestal.interceptor :as i]
             [ring.util.response :refer [response resource-response redirect]]

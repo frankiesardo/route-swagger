@@ -4,7 +4,7 @@
             [pedestal.swagger.error :as sw.error]
             [io.pedestal.http :as bootstrap]
             [io.pedestal.http.route :as route]
-            [io.pedestal.impl.interceptor :refer [terminate]]
+            [io.pedestal.interceptor.chain :refer [terminate]]
             [io.pedestal.interceptor.helpers :as interceptor]
             [ring.util.http-response :as resp]
             [ring.util.http-status :as status]

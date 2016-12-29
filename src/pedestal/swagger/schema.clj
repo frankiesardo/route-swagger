@@ -2,7 +2,7 @@
   (:require [schema.coerce :as c]
             [schema.core :as s]
             [schema.utils :as u]
-            [io.pedestal.impl.interceptor :refer [terminate]]))
+            [io.pedestal.interceptor.chain :refer [terminate]]))
 
 (defn- coerce! [schema value coercions]
   (let [result ((c/coercer schema coercions) value)]
