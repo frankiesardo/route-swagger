@@ -8,8 +8,8 @@
           :src-linenum-anchor-prefix "L"}
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [io.pedestal/pedestal.service "0.5.1"]
-                 [metosin/ring-swagger "0.20.4"]
-                 [metosin/ring-swagger-ui "2.1.0"]
+                 [metosin/ring-swagger "0.22.4"]
+                 [metosin/ring-swagger-ui "2.1.4-0"]
                  [frankiesardo/linked "1.2.2"]]
   :release-tasks [["vcs" "assert-committed"]
                   ["change" "version" "leiningen.release/bump-version" "release"]
