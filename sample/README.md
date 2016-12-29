@@ -8,6 +8,6 @@ https://pedestal-swagger.herokuapp.com/index.html
 
 ## Running Locally
 
-    PORT=8090 lein run
+    lein run
     
-In a browser, visit http://localhost:8090/pets
+In a browser, visit http://localhost:8080

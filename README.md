@@ -15,24 +15,28 @@ Generate Swagger documentation from pedestal routes
 ## Usage
 
 ```clj
-(:require [schema.core :as schema]
-          [pedestal.swagger.core :as swagger])
+(:require [io.pedestal.interceptor.helpers :as interceptor]
+          [schema.core :as schema]
+          [pedestal.swagger.core :as swagger]
+          [pedestal.swagger.doc :as swagger.doc])
 ```
 
-
-Annotate your endpoints using `swagger/defhandler`. This macro takes a documentation map that will be attached to the interceptor meta.
+Annotate your interceptors using `swagger.doc/annotate`. This function will attach swagger metadata to your interceptor.
 
 ```clj
-(swagger/defhandler my-endpoint
-  {:summary "Enpoint for stuff"
-   :description "This is an interesting endpoint"
-   :parameters {:query {:param1 schema/Bool}
-                :body {:param2 schema/Str
-                       :param3 schema/Inst}}
-   :responses {:default {:headers {:x-tracking schema/Uuid}}
-               418 {:description "I'm sorry, I'm a teapot"}}}
-  [request]
-  ...)
+(def my-endpoint
+  (swagger/annotate
+   {:summary "Enpoint for stuff"
+    :description "This is an interesting endpoint"
+    :parameters {:query {:param1 schema/Bool}
+                 :body {:param2 schema/Str
+                        :param3 schema/Inst}}
+    :responses {:default {:headers {:x-tracking schema/Uuid}}
+                418 {:description "I'm sorry, I'm a teapot"}}}
+   (interceptor/handler
+    ::my-endpoint
+    (fn [request]
+      ...))))
 ```
 
 You can use these interceptors just like any other interceptors in your route definition.
@@ -41,24 +45,35 @@ You can use these interceptors just like any other interceptors in your route de
 (defroutes routes [[["/my-endpoint" {:get my-endpoint}]]])
 ```
 
-Documented paths are generated from your route table. You can inspect at any time what it looks like calling:
+And of course there are some helping macros in the swagger namespace to help you define them more succintely.
 
 ```clj
-(pedestal.swagger.doc/doc-routes routes)
-;; => {"/my-endpoint" {:get {...}}
-;;     ...}
+(swagger/defhandler my-handler
+  {:summary ".."
+   :parameters {..}
+   :responses {..}}
+  [request]
+  ...)
 ```
 
-But what you normally want is to inject the documentation in your route table, so that is available to your interceptors. There's a handy macro for that:
+A swagger path specification can be generated from your route table. You can inspect at any time what it looks like calling `gen-paths`.
+
+```clj
+(swagger.doc/gen-paths routes)
+
+;; => {"/my-endpoint" {:get {...}} ...}
+```
+
+But what you normally want is to inject the swagger paths in your route table, so that is available to your interceptors. There's a handy macro for that.
 
 ```clj
 (swagger/defroutes routes
-  {:title "Swagger API"
-   :description "Swagger + Pedestal api"}
+  {:info {:title "Swagger API"
+          :description "Swagger + Pedestal api"}}
   [[["/my-endpoint" {:get my-endpoint}]]])
 ```
 
-The second argument to defroutes is an optional map that will be merged with the generated paths and some default values. The resulting swagger documentation will look like:
+The second argument to defroutes is an optional map that will be merged with the generated paths and some default values to create a complete swagger documentation. The resulting swagger object looks like this:
 
 ```clj
 {:swagger "2.0"
@@ -68,12 +83,12 @@ The second argument to defroutes is an optional map that will be merged with the
  :paths {"/my-endpoint" {...}}}
 ```
 
-A special endpoint can be added to convert this data structure in a json schema and serve it on a path:
+A special handler can be added to convert this data structure in a json schema and serve it on a path (usually named `swagger.json`):
 
 ```clj
 (swagger/defroutes routes
   [[["/my-endpoint" {:get my-endpoint}]
-    ["/doc" {:get [(swagger/swagger-doc)]}]]])
+    ["/swagger.json" {:get [(swagger/swagger-json)]}]]])
 ```
 
 And of course you can add a swagger-ui endpoint to provide an easy way to view and play with your API.
@@ -81,8 +96,8 @@ And of course you can add a swagger-ui endpoint to provide an easy way to view a
 ```clj
 (swagger/defroutes routes
   [[["/my-endpoint" {:get my-endpoint}]
-  ["/doc" {:get [(swagger/swagger-doc)]}]
-  ["/ui/*resource" {:get [(swagger/swagger-ui)]}]]])
+  ["/swagger/swagger.json" {:get [(swagger/swagger-json)]}]
+  ["/swagger/*resource" {:get [(swagger/swagger-ui)]}]]])
 ```
 
 _Note that the swagger-ui endpoint requires a_ `*resource` _splat parameter._
@@ -113,19 +128,31 @@ A common pattern is to have an interceptor at the root of a path that loads a re
 ```
 All the documentation specified in the interceptor (such as parameters, responses, description) will be inherited by the endpoints on the same path. Thus you can reuse both behaviour and the documentation for said behaviour.
 
-And finally we want to be able to use the schemas in the documentation to check the incoming parameters or the outgoing responses. To do so we can include `swagger/coerce-parameters` and `swagger/validate-response` at the top of our route spec. The default behaviour of these interceptors could be overridden passing a custom coercion or validation function.
+And finally we want to be able to use the schemas in the documentation to check the incoming parameters or the outgoing responses. To do so we can include `swagger/coerce-request` and `swagger/validate-response` at the top of our route spec. The default behaviour of these interceptors could be overridden passing a custom coercion or validation function.
 
 ```clj
 (swagger/defroutes routes
-  [[["/" ^:interceptors [(swagger/coerce-params) (swagger/validate-response)]
-      ["/thing/:id" ^:interceptors [load-thing-from-db]
-        {:get do-get-thing}
-        {:put do-update-thing}
-        {:delete do-delete-thing}]]]])
+  [[["/" ^:interceptors [(swagger/body-params)
+                         (swagger/coerce-request)
+                         (swagger/validate-response)]
+     ["/thing/:id" ^:interceptors [load-thing-from-db]
+      {:get do-get-thing}
+      {:put do-update-thing}
+      {:delete do-delete-thing}]]]])
 ```
+
+Note that you usually need to include `(swagger/body-params)` as it will make sure the keys in the request map are where the validator expects to find them. Each interceptor can still be configured to tweak its default behaviour.
+
+An interceptor with sensible error handling for most of swagger use cases is available under `pedestal.swagger.error` namespace, but you're encouraged to build your own using pedestal pattern matching.
 
 For a complete example have a look at the `sample` project.
 
+
+## Roadmap
+
+- Support multiple swagger.json and swagger-ui endpoints (e.g. for versioned apis)
+- Content negotiation and documenting `consumes`
+- More failures at compile time (tags not in sync, produces/consumes not in sync)
 
 ## License
 

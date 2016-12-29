@@ -5,6 +5,8 @@
             [schema.core :as s]
             [schema.test :as validation]
             [pedestal.swagger.doc :as doc]
+            [pedestal.swagger.error :as error]
+            [pedestal.swagger.body-params :as body-params]
             [ring.util.response :refer [response]]
             [ring.swagger.swagger2 :as spec]
             [io.pedestal.http.route.definition :as definition]
@@ -19,7 +21,7 @@
 
 (defon-request auth-middleware
   {:description "Requires auth as header"
-   :parameters {:header {:auth s/Str}}}
+   :parameters {:header {(req "auth") s/Str}}}
   [req] req)
 
 (defon-request id-middleware
@@ -32,14 +34,14 @@
    :parameters {:body {:name s/Keyword}}}
   [{:keys [body-params path-params headers]}]
   (response {:params (merge body-params path-params
-                            (select-keys headers [:auth]))}))
+                            (select-keys headers ["auth"]))}))
 
 (defhandler delete-handler
   {:summary "Delete resource with id"
    :parameters {:query {:notify s/Bool}}}
   [{:keys [query-params path-params headers]}]
   (response {:params (merge query-params path-params
-                         (select-keys headers [:auth]))}))
+                         (select-keys headers ["auth"]))}))
 
 (defn non-documented-handler
   [req] (response {}))
@@ -64,24 +66,21 @@
       bootstrap/service-fn
       ::bootstrap/service-fn))
 
-(defn swagger-validator [swagger-object]
-  (let [validator (v/validator (slurp (io/resource "ring/swagger/v2.0_schema.json")))
-        json (spec/swagger-json swagger-object {})]
-    (validator json)
-    (response json)))
-
- (definition/defroutes routes
+(definition/defroutes routes
   [["t" :test
-    ["/" ^:interceptors [(pedestal-body-params/body-params)
-                         (keywordize-params :headers) (body-params)
-                         (coerce-params) (validate-response)
+    ["/" ^:interceptors [error/handler
+                         (body-params
+                          (select-keys body-params/default-parser-map
+                                       ["application/edn"]))
+                         (coerce-request)
+                         (validate-response)
                          auth-middleware]
      {:get get-handler}
      ["/x/:id" ^:interceptors [id-middleware]
       {:put put-handler
        :delete delete-handler
        :head non-documented-handler}]
-     ["/doc" {:get [(swagger-doc swagger-validator)]}]]]])
+     ["/doc" {:get [(swagger-json)]}]]]])
 
 (def app (make-app {::bootstrap/router :prefix-tree ;; or :linear-search
                     ::bootstrap/routes (doc/inject-docs
@@ -89,39 +88,48 @@
                                          :version "0.1"} routes)}))
 
 (deftest generates-correct-paths
-  (let [paths {"/" {:get
-                    {:description "Requires auth as header"
-                     :summary "Get all resources"
-                     :parameters {:query {:q s/Str}
-                                  :header {:auth s/Str}}
-                     :responses {200 {:schema {:status s/Str}}
-                                 400 {}
-                                 500 {}
-                                 :default {:schema {:result [s/Str]}
-                                           :headers {(req "Location") s/Str}}}}}
-               "/x/:id" {:put
-                       {:description "Requires id on path"
-                        :summary "Put resource with id"
-                        :parameters {:path {:id s/Int}
-                                     :header {:auth s/Str}
-                                     :body {:name s/Keyword}}
-                        :responses {400 {} 500 {}}}
-                       :delete
-                       {:description "Requires id on path"
-                        :summary "Delete resource with id"
-                        :parameters {:path {:id s/Int}
-                                     :header {:auth s/Str}
-                                     :query {:notify s/Bool}}
+  (let [paths {"/"
+               {:get
+                {:consumes ["application/edn"]
+                 :description "Requires auth as header"
+                 :summary "Get all resources"
+                 :parameters {:query {:q s/Str}
+                              :header {(req "auth") s/Str}}
+                 :responses {200 {:schema {:status s/Str}}
+                             400 {}
+                             500 {}
+                             :default {:schema {:result [s/Str]}
+                                       :headers {(req "Location") s/Str}}}}}
+               "/x/:id"
+               {:put
+                {:consumes ["application/edn"]
+                 :description "Requires id on path"
+                 :summary "Put resource with id"
+                 :parameters {:path {:id s/Int}
+                              :header {(req "auth") s/Str}
+                              :body {:name s/Keyword}}
+                 :responses {400 {} 500 {}}}
+                :delete
+                {:consumes ["application/edn"]
+                          :description "Requires id on path"
+                          :summary "Delete resource with id"
+                          :parameters {:path {:id s/Int}
+                                       :header {(req "auth") s/Str}
+                                       :query {:notify s/Bool}}
                         :responses {400 {}
                                     500 {}}}}}]
     (is (= paths (doc/gen-paths routes)))))
 
+(deftest generates-valid-json-schema
+  (let [validator (v/validator (slurp (io/resource "ring/swagger/v2.0_schema.json")))]
+    (validator (spec/swagger-json {:paths (doc/gen-paths routes)}))))
+
 (deftest coerces-params
   (are [resp req] (= resp (read-string (:body req)))
-       {:params {:auth "y", :id 1, :notify true}}
+       {:params {"auth" "y", :id 1, :notify true}}
        (response-for app :delete "http://t/x/1?notify=true" :headers {"Auth" "y"})
 
-       {:error {:headers {:auth "missing-required-key"}}}
+       {:error {:headers {"auth" "missing-required-key"}}}
        (response-for app :delete "http://t/x/1?notify=true")
 
        {:error {:query-params {:notify "missing-required-key"}}}
@@ -136,7 +144,7 @@
                                "Content-Type" "application/edn"}
                      :body (pr-str {:name 3}))
 
-       {:params {:auth "y", :id 1, :name :foo}}
+       {:params {"auth" "y", :id 1, :name :foo}}
        (response-for app :put "http://t/x/1"
                      :headers {"Auth" "y"
                                "Content-Type" "application/edn"}
@@ -166,13 +174,17 @@
                      :get "http://t/?q=fail"
                      :headers {"Auth" "y"})))
 
+(deftest checks-body-params
+  (testing "returns 400 when given badly formatted body"
+    (is (= 400
+           (:status
+            (response-for app
+                          :put "http://t/x/1"
+                          :headers {"Auth" "y"
+                                    "Content-Type" "application/edn"}
+                          :body "{\"foo\" }"))))))
+
 (deftest checks-swagger-handler-like-any-other-route
   (are [resp req] (= resp (read-string (:body req)))
-       {:error {:headers {:auth "missing-required-key"}}}
+       {:error {:headers {"auth" "missing-required-key"}}}
        (response-for app :get "http://t/doc")))
-
-(deftest generates-valid-json-schema
-  (is (= 200 (:status
-              (response-for app
-                            :get "http://t/doc"
-                            :headers {"Auth" "y"})))))
