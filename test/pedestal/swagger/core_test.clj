@@ -10,7 +10,6 @@
             [ring.util.response :refer [response]]
             [ring.swagger.swagger2 :as spec]
             [io.pedestal.http.route.definition :as definition]
-            [io.pedestal.http.body-params :as pedestal-body-params]
             [io.pedestal.http :as bootstrap]
             [scjsv.core :as v]
             [clojure.java.io :as io]))

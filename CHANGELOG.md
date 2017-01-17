@@ -1,3 +1,6 @@
+## 0.4.5
+- Bump to pedestal 0.5.2
+
 ## 0.4.4
 - [Breaking] Move error handling to `pedestal.swagger.error`
 - [Breaking] Coerce/validate functions do not have access to context anymore.
