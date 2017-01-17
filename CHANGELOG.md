@@ -1,5 +1,5 @@
 ## 0.4.6
-- Bump ring-swagger and ring-swagger-ui so this library will work in Clojure 1.9
+- Bump ring-swagger and ring-swagger-ui so this library works in Clojure 1.9
 
 ## 0.4.5
 - Bump to pedestal 0.5.2
