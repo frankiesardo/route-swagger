@@ -8,8 +8,8 @@
           :src-linenum-anchor-prefix "L"}
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [io.pedestal/pedestal.service "0.5.2"]
-                 [metosin/ring-swagger "0.22.4"]
-                 [metosin/ring-swagger-ui "2.1.4-0"]
+                 [metosin/ring-swagger "0.22.14"]
+                 [metosin/ring-swagger-ui "2.2.8"]
                  [frankiesardo/linked "1.2.2"]
                  [s3-wagon-private "1.2.0"]]
 
