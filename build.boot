@@ -16,8 +16,8 @@
 (deftask testing []
   (set-env! :source-paths #(conj % "test")
             :dependencies #(into %
-                                 '[[io.pedestal/pedestal.service "0.4.0"]
-                                   [io.pedestal/pedestal.jetty "0.4.0"]
+                                 '[[io.pedestal/pedestal.service "0.5.2"]
+                                   [io.pedestal/pedestal.jetty "0.5.2"]
                                    [metosin/scjsv "0.2.0" :exclusions [org.clojure/core.async]]]))
   identity)
 
