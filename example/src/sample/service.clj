@@ -2,7 +2,7 @@
   (:require [route-swagger.interceptor :as sw.int]
             [route-swagger.doc :as sw.doc]
             [ring.swagger.middleware :refer [stringify-error]]
-            [io.pedestal.http :as bootstrap]
+            [io.pedestal.http :as pedestal]
             [io.pedestal.http.route :as route]
             [io.pedestal.interceptor.chain :refer [terminate]]
             [io.pedestal.interceptor :as i]
@@ -274,12 +274,7 @@
   `(def ~n (-> ~routes route/expand-routes (sw.doc/with-swagger ~doc))))
 
 (def swagger-json (i/interceptor (sw.int/swagger-json)))
-(def swagger-ui (i/interceptor {:name  :foo
-                                :enter (fn [context]
-                                         (println 'HEYYY)
-                                         (let [ctx ((:enter (sw.int/swagger-ui)) context)]
-                                           (println ctx)
-                                           ctx))}))
+(def swagger-ui (i/interceptor (sw.int/swagger-ui)))
 
 (defroutes routes
   {:info {:title       "Swagger Sample App"
@@ -291,7 +286,7 @@
                           :url         "http://swagger.io"}}
           {:name        "orders"
            :description "Operations about orders"}]}
-  [[["/" ^:interceptors [bootstrap/json-body
+  [[["/" ^:interceptors [pedestal/json-body
                          error-responses
                          (body-params)
                          common-body
@@ -320,9 +315,9 @@
      ["/*resource" {:get swagger-ui}]
      ]]])
 
-(def service {:env                      :prod
-              ::bootstrap/routes        routes
-              ::bootstrap/router        :linear-search
-              ::bootstrap/resource-path "/public"
-              ::bootstrap/type          :jetty
-              ::bootstrap/port          (Integer. (or (System/getenv "PORT") 8080))})
+(def service {:env                     :prod
+              ::pedestal/routes        routes
+              ::pedestal/router        :linear-search
+              ::pedestal/resource-path "/public"
+              ::pedestal/type          :jetty
+              ::pedestal/port          (Integer. (or (System/getenv "PORT") 8080))})

@@ -1,7 +1,7 @@
 (ns sample.server
   (:gen-class) ; for -main method in uberjar
   (:require [sample.service :as service]
-            [io.pedestal.http :as bootstrap]))
+            [io.pedestal.http :as pedestal]))
 
 (defonce service-instance nil)
 
@@ -9,18 +9,18 @@
   "Standalone dev/prod mode."
   [& [opts]]
   (alter-var-root #'service-instance
-                  (constantly (bootstrap/create-server (merge service/service opts)))))
+                  (constantly (pedestal/create-server (merge service/service opts)))))
 
 
 (defn -main [& args]
   (create-server)
-  (bootstrap/start service-instance))
+  (pedestal/start service-instance))
 
 ;; Container prod mode for use with the io.pedestal.servlet.ClojureVarServlet class.
 
 (defn servlet-init [this config]
   (alter-var-root #'service-instance
-                  (constantly (bootstrap/create-servlet service/service)))
+                  (constantly (pedestal/create-servlet service/service)))
   (.init (::bootstrap/servlet service-instance) config))
 
 (defn servlet-destroy [this]
