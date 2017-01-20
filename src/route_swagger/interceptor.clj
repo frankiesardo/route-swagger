@@ -39,7 +39,7 @@
                                "conf.js" (response (str "window.API_CONF = {url: \""
                                                         (apply url-for ::doc/swagger-json path-opts)
                                                         "\"};"))
-                               (resource-response res {:root "swagger-ui/"})))))})
+                               (resource-response res {:root "swagger-ui"})))))})
 
 (defn coerce-request
   "Creates an interceptor that coerces the params for the selected route,

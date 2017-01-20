@@ -4,8 +4,7 @@
             [ring.swagger.middleware :refer [stringify-error]]
             [io.pedestal.http :as bootstrap]
             [io.pedestal.http.route :as route]
-            [io.pedestal.http.route.definition :as definition]
-            [io.pedestal.impl.interceptor :refer [terminate]]
+            [io.pedestal.interceptor.chain :refer [terminate]]
             [io.pedestal.interceptor :as i]
             [io.pedestal.interceptor.error :as error]
             [io.pedestal.http.body-params :refer [body-params]]
@@ -272,7 +271,7 @@
 
 (defmacro defroutes [n doc routes]
   #_`(def ~n (s/with-fn-validation (-> ~routes definition/expand-routes (sw.doc/with-swagger ~doc))))
-  `(def ~n (-> ~routes definition/expand-routes (sw.doc/with-swagger ~doc))))
+  `(def ~n (-> ~routes route/expand-routes (sw.doc/with-swagger ~doc))))
 
 (def swagger-json (i/interceptor (sw.int/swagger-json)))
 (def swagger-ui (i/interceptor {:name  :foo
