@@ -2,10 +2,10 @@
  :source-paths   #{"src"}
  :resource-paths #{"resources"}
  :dependencies
- '[[org.clojure/clojure "1.7.0"]
+ '[[org.clojure/clojure "1.8.0"]
 
-   [metosin/ring-swagger "0.22.4"]
-   [metosin/ring-swagger-ui "2.1.4-0"]
+   [metosin/ring-swagger "0.22.14"]
+   [metosin/ring-swagger-ui "2.2.8"]
 
    [adzerk/bootlaces "0.1.13" :scope "test"]
    [adzerk/boot-test "1.0.5" :scope "test"]])
