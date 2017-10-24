@@ -4,8 +4,8 @@
  :dependencies
  '[[org.clojure/clojure "1.8.0"]
 
-   [metosin/ring-swagger "0.22.14"]
-   [metosin/ring-swagger-ui "2.2.8"]
+   [metosin/ring-swagger "0.24.3"]
+   [metosin/ring-swagger-ui "3.0.17"]
 
    [adzerk/bootlaces "0.1.13" :scope "test"]
    [adzerk/boot-test "1.0.5" :scope "test"]])
@@ -16,9 +16,9 @@
 (deftask testing []
   (set-env! :source-paths #(conj % "test")
             :dependencies #(into %
-                                 '[[io.pedestal/pedestal.service "0.5.2"]
-                                   [io.pedestal/pedestal.jetty "0.5.2"]
-                                   [metosin/scjsv "0.2.0" :exclusions [org.clojure/core.async]]]))
+                                 '[[io.pedestal/pedestal.service "0.5.3"]
+                                   [io.pedestal/pedestal.jetty "0.5.3"]
+                                   [metosin/scjsv "0.4.0" :exclusions [org.clojure/core.async]]]))
   identity)
 
 (ns-unmap 'boot.user 'test)

@@ -37,7 +37,7 @@
                              (case res
                                "" (redirect (str path-info "index.html"))
                                "conf.js" (response (str "window.API_CONF = {url: \""
-                                                        (apply url-for ::doc/swagger-json path-opts)
+                                                        (apply @url-for ::doc/swagger-json path-opts)
                                                         "\"};"))
                                (resource-response res {:root "swagger-ui"})))))})
 
