@@ -44,7 +44,7 @@
 (defn coerce-request
   "Creates an interceptor that coerces the params for the selected route,
   according to the route's swagger documentation. A coercion function f that
-  acceps the route params schema and a request and return a request can be
+  accepts the route params schema and a request and return a request can be
   supplied. The default implementation throws if any coercion error occurs."
   ([] (coerce-request (schema/make-coerce-request)))
   ([f]
