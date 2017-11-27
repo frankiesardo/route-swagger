@@ -1,3 +1,8 @@
+## 0.4.7
+- Drop -SNAPSHOT suffix
+- Bump to Clojure 1.9.0-RC1
+- Bump s3-wagon-private
+
 ## 0.4.6
 - Bump ring-swagger and ring-swagger-ui so this library works in Clojure 1.9
 
