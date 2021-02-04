@@ -1,9 +1,10 @@
 (defproject route-swagger "Build with boot"
   :dependencies
-  [[org.clojure/clojure "1.7.0"]
-   [metosin/ring-swagger "0.22.3"]
-   [metosin/ring-swagger-ui "2.1.4-0"]]
-  :source-paths ["src" "resources"]
-  :profiles {:dev {:dependencies [[io.pedestal/pedestal.service "0.5.2"]
-                                  [io.pedestal/pedestal.jetty "0.5.2"]
-                                  [metosin/scjsv "0.2.0" :exclusions [org.clojure/core.async]]]}})
+  [[metosin/ring-swagger "0.26.2"]
+   [metosin/ring-swagger-ui "3.36.0"]]
+  :profiles
+  {:dev {:dependencies
+         [[org.clojure/clojure "1.10.2"]
+          [io.pedestal/pedestal.service "0.5.8"]
+          [io.pedestal/pedestal.jetty "0.5.8"]
+          [metosin/scjsv "0.6.1" :exclusions [org.clojure/core.async]]]}})
