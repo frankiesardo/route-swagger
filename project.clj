@@ -6,5 +6,4 @@
   {:dev {:dependencies
          [[org.clojure/clojure "1.10.2"]
           [io.pedestal/pedestal.service "0.5.8"]
-          [io.pedestal/pedestal.jetty "0.5.8"]
-          [metosin/scjsv "0.6.1" :exclusions [org.clojure/core.async]]]}})
+          [io.pedestal/pedestal.jetty "0.5.8"]]}})
