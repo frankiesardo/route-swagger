@@ -1,3 +1,7 @@
+# Unreleased
+
+- Bump ring-swagger and pedestal dependencies
+
 # 0.1.4
 
 - Fix to work with more secure resource-response (Thanks to [@oliyh](https://github.com/oliyh))
