@@ -11,7 +11,6 @@
             [io.pedestal.http.body-params :refer [body-params]]
             [io.pedestal.http :as bootstrap]
             [io.pedestal.interceptor :as i]
-            [scjsv.core :as v]
             [clojure.java.io :as io]
             [ring.swagger.middleware :refer [stringify-error]]
             [clojure.set :as set]))
@@ -153,10 +152,6 @@
                     ::bootstrap/routes (sw.doc/with-swagger routes
                                                             {:title   "Test"
                                                              :version "0.1"})}))
-
-(deftest generates-valid-json-schema
-  (let [validator (v/validator (slurp (io/resource "ring/swagger/swagger-schema.json")))]
-    (validator (spec/swagger-json {:paths (sw.doc/paths routes)}))))
 
 (deftest coerces-params
   (are [resp req] (= resp (read-string (:body req)))
